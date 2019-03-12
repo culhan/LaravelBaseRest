@@ -223,6 +223,7 @@ class BaseModel extends Model
 		if($validator->fails()) throw new ValidationException($validator->errors());
 		return true;
 	}
+	
 
 	/**
 	 * [scopeActive description]
