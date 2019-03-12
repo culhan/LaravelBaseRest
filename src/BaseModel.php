@@ -222,8 +222,7 @@ class BaseModel extends Model
 		$validator = Validator::make($data, $rules, $messages);
 		if($validator->fails()) throw new ValidationException($validator->errors());
 		return true;
-	}
-	
+	}	
 
 	/**
 	 * [scopeActive description]
