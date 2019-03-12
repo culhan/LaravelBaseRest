@@ -9,7 +9,7 @@
             "homepage": "http://tryits.web.id/"
         }
     ],
-    "homepage": "https://github.com/khancode/laravelbaserest",
+    "homepage": "https://github.com/culhan/laravelbaserest",
     "keywords": ["Laravel", "LaravelBaseRest"],
     "require": {
         "illuminate/support": "~5"
