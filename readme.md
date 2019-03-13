@@ -15,7 +15,18 @@ Via Composer
 $ composer require khancode/laravelbaserest
 ```
 
+Publish
+
+```
+$ php artisan vendor:publish --tag=laravelbaserest.config
+$ php artisan vendor:publish --tag=laravelbaserest.lang
+```
+
 ## Usage
+
+use KhanCode\LaravelBaseRest\BaseModel;
+use KhanCode\LaravelBaseRest\BaseRepository;
+use KhanCode\LaravelBaseRest\BaseService;
 
 ## Change log
 
