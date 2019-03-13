@@ -209,6 +209,37 @@ class BaseModel extends Model
 	}
 
 	/**
+	 * distinct function
+	 *
+	 * @param [type] $query
+	 * @return void
+	 */
+	public function scopeDistinct($query)
+	{
+		$request = Request::all();
+
+		$this->validate($request, [
+            'distinct_column' => [
+                'filled',
+                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
+            ],
+		]);
+		
+		if( !empty($request['distinct_column']) )
+		{
+			if( is_array($request['distinct_column']) )
+			{
+				$colsDistinct = implode(',',$request['distinct_column']);
+				$query->addSelect(\DB::raw('distinct '.$colsDistinct));
+			}
+			else
+			{
+				$query->addSelect(\DB::raw('distinct '.$request['distinct_column']));
+			}
+		}
+	}
+
+	/**
 	 * [validate description]
 	 * @param  [type] $data     [description]
 	 * @param  array  $rules    [description]
