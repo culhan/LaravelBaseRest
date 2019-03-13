@@ -74,6 +74,6 @@ license. Please see the [license file](license.md) for more information.
 [link-packagist]: https://packagist.org/packages/khancode/laravelbaserest
 [link-downloads]: https://packagist.org/packages/khancode/laravelbaserest
 [link-travis]: https://travis-ci.org/khancode/laravelbaserest
-[link-styleci]: https://styleci.io/repos/12345678
-[link-author]: https://github.com/khancode
+[link-styleci]: https://styleci.io/repos/175152077
+[link-author]: https://github.com/culhan
 [link-contributors]: ../../contributors
