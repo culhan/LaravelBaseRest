@@ -24,9 +24,20 @@ $ php artisan vendor:publish --tag=laravelbaserest.lang
 
 ## Usage
 
-this for base model KhanCode\LaravelBaseRest\BaseModel;
-this for base Repository KhanCode\LaravelBaseRest\BaseRepository;
-this for base Service KhanCode\LaravelBaseRest\BaseService;
+this for base model 
+```
+use KhanCode\LaravelBaseRest\BaseModel;
+```
+
+this for base Repository 
+```
+use KhanCode\LaravelBaseRest\BaseRepository;
+```
+
+this for base Service 
+```
+use KhanCode\LaravelBaseRest\BaseService;
+```
 
 ## Change log
 
