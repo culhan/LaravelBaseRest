@@ -221,7 +221,7 @@ class BaseModel extends Model
 		$this->validate($request, [
             'distinct_column' => [
                 'filled',
-                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
+                new SortableAndSearchable($this->sortableAndSearchableColumn),
             ],
 		]);
 		
