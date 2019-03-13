@@ -73,7 +73,7 @@ class LaravelBaseRestServiceProvider extends ServiceProvider
 
         // Publishing the translation files.
         $this->publishes([
-            __DIR__.'/../resources/lang' => resource_path('lang/vendor/khancode'),
+            __DIR__.'/../resources/lang/en' => resource_path('lang/en'),
         ], 'laravelbaserest.lang');
 
         // Registering package commands.
