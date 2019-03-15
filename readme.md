@@ -39,6 +39,19 @@ this for base Service
 use KhanCode\LaravelBaseRest\BaseService;
 ```
 
+add this code if you want to use json default base return at App\Exceptions\Handler.php
+```
+public function render($request, Exception $exception)
+{
+    if( method_exists($exception,'responseJson') )
+    {            
+        return $exception->responseJson();
+    }
+
+    return parent::render($request, $exception);
+}
+```
+
 ## Change log
 
 Please see the [changelog](changelog.md) for more information on what has changed recently.
