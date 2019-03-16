@@ -1,18 +1,19 @@
 <?php
 
 namespace App\Http\Models;
+
 use KhanCode\LaravelBaseRest\BaseModel;
 
 class Users extends BaseModel
 {
-    public $table = "users";
+    public $table = 'users';
 
-    protected $soft_delete  =   true;
+    protected $soft_delete = true;
 
     public $timestamps = true;
 
     /**
-     * [scopeGetAll description]
+     * [scopeGetAll description].
      * @param  [type] $query [description]
      * @return [type]        [description]
      */
@@ -22,7 +23,7 @@ class Users extends BaseModel
     }
 
     /**
-     * [boot description]
+     * [boot description].
      * @return [type] [description]
      */
     public static function boot()

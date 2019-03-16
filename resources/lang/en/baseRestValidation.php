@@ -11,7 +11,7 @@ return [
 
     'attributes' => [
         'sortableAndSearchable' => 'The :value is not orderable or searchable.',
-        'sortableAndSearchableExist' => 'The :value is not exist.',        
+        'sortableAndSearchableExist' => 'The :value is not exist.',
         'sortType'  =>  'This :attr must be \'asc\' or \'desc\'',
     ],
 

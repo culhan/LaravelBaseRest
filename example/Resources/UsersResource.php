@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use App;
 use Illuminate\Http\Resources\Json\Resource;
 
 class UsersResource extends Resource
@@ -14,7 +13,7 @@ class UsersResource extends Resource
      * @return array
      */
     public function toArray($request)
-    {          
+    {
         return $this->getAttributes();
     }
 
@@ -28,7 +27,7 @@ class UsersResource extends Resource
     {
         return [
             'status'    => 200,
-            'error'     => 0
+            'error'     => 0,
         ];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Repositories;
 
 use Request;
@@ -7,18 +8,18 @@ use KhanCode\LaravelBaseRest\BaseRepository;
 use KhanCode\LaravelBaseRest\DataEmptyException;
 
 /**
- * code for system logic
+ * code for system logic.
  */
 class UsersRepository extends BaseRepository
 {
     /**
-     * [$module description]
+     * [$module description].
      * @var string
      */
-    static $module = 'Users';
+    public static $module = 'Users';
 
     /**
-     * [__construct description]
+     * [__construct description].
      */
     public function __construct()
     {
@@ -26,7 +27,7 @@ class UsersRepository extends BaseRepository
     }
 
     /**
-     * [getIndexData description]
+     * [getIndexData description].
      * @param  array  $sortableAndSearchableColumn [description]
      * @return [type]                              [description]
      */
@@ -35,7 +36,7 @@ class UsersRepository extends BaseRepository
         $this->model::validate(Request::all(), [
             'per_page'  =>  ['numeric'],
         ]);
-        
+
         $data = $this->model
             ->getAll()
             ->setSortableAndSearchableColumn($sortableAndSearchableColumn)
@@ -45,14 +46,15 @@ class UsersRepository extends BaseRepository
             ->paginate(Request::get('per_page'));
 
         $data->sortableAndSearchableColumn = $sortableAndSearchableColumn;
-            
-        if($data->total() == 0) throw new DataEmptyException(trans('validation.attributes.dataNotExist',['attr' => self::$module]));
 
+        if ($data->total() == 0) {
+            throw new DataEmptyException(trans('validation.attributes.dataNotExist', ['attr' => self::$module]));
+        }
         return $data;
     }
 
     /**
-     * [getSingleData description]
+     * [getSingleData description].
      * @param  [type] $id [description]
      * @return [type]     [description]
      */
@@ -60,12 +62,12 @@ class UsersRepository extends BaseRepository
     {
         $return = $this->model
                 ->getAll()
-                ->where($this->model->table.'.'.$this->model->primary_key,$id)
+                ->where($this->model->table.'.'.$this->model->primary_key, $id)
                 ->first();
-                        
-        if($return === null) throw new DataEmptyException(trans('validation.attributes.dataNotExist',['attr' => self::$module]));
-        
+
+        if ($return === null) {
+            throw new DataEmptyException(trans('validation.attributes.dataNotExist', ['attr' => self::$module]));
+        }
         return $return;
     }
-    
 }

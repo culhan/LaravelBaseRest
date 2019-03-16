@@ -5,12 +5,12 @@ namespace KhanCode\LaravelBaseRest;
 class Helpers
 {
     /**
-     * try
+     * try.
      *
      * @param Type $var
      * @return void
      */
-	public static function dda($var = null)
+    public static function dda($var = null)
     {
         dd($var);
     }

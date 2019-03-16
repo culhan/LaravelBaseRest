@@ -3,15 +3,12 @@
 namespace App\Http\Controllers;
 
 use App;
-use Request;
 use App\Http\Services\UsersService;
-use App\Http\Controllers\Controller;
 
 class UsersController extends Controller
-{    
-
+{
     /**
-     * [__construct description]
+     * [__construct description].
      */
     public function __construct()
     {
@@ -19,7 +16,7 @@ class UsersController extends Controller
     }
 
     /**
-     * [index description]
+     * [index description].
      * @return [type] [description]
      */
     public function index()
@@ -29,11 +26,10 @@ class UsersController extends Controller
                 'name'  =>  'name',
                 'fmodified_time'    =>  'fmodified_time',
             ]);
-        
+
         return (App\Http\Resources\UsersResource::collection($data))
                 ->additional([
-                    'sortableAndSearchableColumn' =>    $data->sortableAndSearchableColumn
+                    'sortableAndSearchableColumn' =>    $data->sortableAndSearchableColumn,
                 ]);
     }
-
 }

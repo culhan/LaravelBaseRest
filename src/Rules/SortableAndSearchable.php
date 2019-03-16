@@ -6,9 +6,6 @@ use Illuminate\Contracts\Validation\Rule;
 
 class SortableAndSearchable implements Rule
 {
-    /**
-     * 
-     */
     public $sortAbleNSearchAbleColumn;
 
     /**
@@ -31,35 +28,26 @@ class SortableAndSearchable implements Rule
     public function passes($attribute, $value)
     {
         $this->value = $value;
-        if( is_array($value) )
-        {
+        if (is_array($value)) {
             foreach ($value as $column) {
                 $this->value = $column;
-                if( !isset($this->sortAbleNSearchAbleColumn[$column]) )
-                {
+                if (! isset($this->sortAbleNSearchAbleColumn[$column])) {
                     $this->notExist = 1;
+
                     return false;
-                }
-                else
-                {
-                    if( !$this->sortAbleNSearchAbleColumn[$column] )
-                    {             
+                } else {
+                    if (! $this->sortAbleNSearchAbleColumn[$column]) {
                         return false;
                     }
                 }
             }
-        }
-        else
-        {
-            if( !isset($this->sortAbleNSearchAbleColumn[$value]) )
-            {
+        } else {
+            if (! isset($this->sortAbleNSearchAbleColumn[$value])) {
                 $this->notExist = 1;
+
                 return false;
-            }
-            else
-            {
-                if( !$this->sortAbleNSearchAbleColumn[$value] )
-                {             
+            } else {
+                if (! $this->sortAbleNSearchAbleColumn[$value]) {
                     return false;
                 }
             }
@@ -75,9 +63,8 @@ class SortableAndSearchable implements Rule
      */
     public function message()
     {
-        if(isset($this->notExist))
-        {
-            return trans('baseRestValidation.attributes.sortableAndSearchableExist', ['value' => $this->value]);    
+        if (isset($this->notExist)) {
+            return trans('baseRestValidation.attributes.sortableAndSearchableExist', ['value' => $this->value]);
         }
 
         return trans('baseRestValidation.attributes.sortableAndSearchable', ['value' => $this->value]);

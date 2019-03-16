@@ -48,7 +48,7 @@ class LaravelBaseRestServiceProvider extends ServiceProvider
     {
         return ['laravelbaserest'];
     }
-    
+
     /**
      * Console-specific booting.
      *
