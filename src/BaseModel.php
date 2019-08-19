@@ -303,11 +303,12 @@ class BaseModel extends Model
 
         if( $this->soft_delete )
         {
-        	\DB::table($this->table)
+			\DB::connection($this->connection)
+				->table($this->table)
         		->where($this->primaryKey, $this->id)
         		->update([
         			static::DELETED_AT	=>	date('Y-m-d H:i:s'),
-        			'deleted_by' 	=> 	user()->id,
+        			'deleted_by' 	=> 	auth()->guard(auth()->getDefaultDriver())->id(),
         			'deleted_from'	=>	$_SERVER['REMOTE_ADDR'],
         		]);
         }
