@@ -18,7 +18,6 @@ $ composer require khancode/laravelbaserest
 Publish
 
 ```
-$ php artisan vendor:publish --tag=laravelbaserest.config
 $ php artisan vendor:publish --tag=laravelbaserest.lang
 ```
 
