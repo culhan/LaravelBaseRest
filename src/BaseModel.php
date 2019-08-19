@@ -1,13 +1,11 @@
 <?php
 
-namespace KhanCode\LaravelBaseRest;
+namespace App\Http\Models;
 
 use Request;
 use Validator;
-use KhanCode\LaravelBaseRest\ValidationException;
+use App\Exceptions\ValidationException;
 use Illuminate\Database\Eloquent\Model;
-use KhanCode\LaravelBaseRest\Rules\SortType;
-use KhanCode\LaravelBaseRest\Rules\SortableAndSearchable;
 
 class BaseModel extends Model
 {
@@ -44,9 +42,16 @@ class BaseModel extends Model
 
 	/**
 	 * [$sortableAndSearchableColumn description]
-	 * @var [type]
+	 * @var array
 	 */
 	public $sortableAndSearchableColumn = [];
+
+	/**
+	 * relationColumn variable
+	 *
+	 * @var array
+	 */
+	public $relationColumn = [];
 
 	/**
 	 * set All Model without timestamps
@@ -64,11 +69,24 @@ class BaseModel extends Model
 	}
 
 	/**
+	 * set relationColumn function
+	 *
+	 * @param [type] $query
+	 * @param array $value
+	 * @return void
+	 */
+	public function scopeSetRelationColumn($query, $value=[])
+	{		
+		$this->relationColumn = $value;		
+		
+	}
+
+	/**
 	 * [FunctionName description]
 	 * @param string $value [description]
 	 */
 	public function scopeSearch($query)
-	{
+	{		
 		if(empty($this->sortableAndSearchableColumn)) return $query;
 		
 		$request = Request::all();
@@ -76,7 +94,7 @@ class BaseModel extends Model
 		$this->validate($request, [
             'search_column' => [
                 'required_with:search_text',
-                new SortableAndSearchable($this->sortableAndSearchableColumn)
+                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
             ],
             'search_text'   => ['required_with:search_column'],
         ]);
@@ -84,7 +102,8 @@ class BaseModel extends Model
 		$queryOld = $this->getSql($query);
 		$thisClass = get_class($this);
 		$model = new $thisClass;
-		$model->sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
+		$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
+		$model->setRelationColumn( $this->relationColumn );
 		$query = $model->setTable(\DB::raw('('.$queryOld.') as myTable'))->whereRaw("1=1");
 
 		if( isset($request['search_column']) && isset($request['search_text']) )
@@ -125,7 +144,7 @@ class BaseModel extends Model
 	 * @return [type]           [description]
 	 */
 	public function searchOperator($query, $column, $text, $operator = 'like')
-	{			
+	{					
 		if( $operator == 'like' )
 			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
 
@@ -153,7 +172,7 @@ class BaseModel extends Model
 	 * @return [type]        [description]
 	 */
 	public function getSql($model)
-	{
+	{		
 	    $replace = function ($sql, $bindings)
 	    {
 	        $needle = '?';
@@ -174,6 +193,41 @@ class BaseModel extends Model
 	}
 
 	/**
+	 * distinct function
+	 *
+	 * @param [type] $query
+	 * @return void
+	 */
+	public function scopeDistinct($query,$data=null)
+	{
+		$request = Request::all();		
+		
+		$this->validate($request, [
+            'distinct_column' => [
+                'filled',
+                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn+$this->relationColumn),
+            ],
+		]);
+		
+		if(!empty($data)) {
+			$request['distinct_column'] = $data;
+		}
+
+		if( !empty($request['distinct_column']) )
+		{
+			if( is_array($request['distinct_column']) )
+			{
+				$colsDistinct = implode(',',$request['distinct_column']);
+				$query->select(\DB::raw('distinct '.$colsDistinct));
+			}
+			else
+			{
+				$query->select(\DB::raw('distinct '.$request['distinct_column']));
+			}
+		}
+	}
+
+	/**
 	 * [FunctionName description]
 	 * @param string $value [description]
 	 */
@@ -184,11 +238,11 @@ class BaseModel extends Model
 		$this->validate($request, [
             'sort_column' => [
                 'required_with:sort_type',
-                new SortableAndSearchable($this->sortableAndSearchableColumn),
+                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
             ],
             'sort_type'   => [
             	'required_with:sort_column',
-            	new SortType(),
+            	new \App\Rules\SortType(),
             ],
     	]);
 		
@@ -209,37 +263,6 @@ class BaseModel extends Model
 	}
 
 	/**
-	 * distinct function
-	 *
-	 * @param [type] $query
-	 * @return void
-	 */
-	public function scopeDistinct($query)
-	{
-		$request = Request::all();
-
-		$this->validate($request, [
-            'distinct_column' => [
-                'filled',
-                new SortableAndSearchable($this->sortableAndSearchableColumn),
-            ],
-		]);
-		
-		if( !empty($request['distinct_column']) )
-		{
-			if( is_array($request['distinct_column']) )
-			{
-				$colsDistinct = implode(',',$request['distinct_column']);
-				$query->addSelect(\DB::raw('distinct '.$colsDistinct));
-			}
-			else
-			{
-				$query->addSelect(\DB::raw('distinct '.$request['distinct_column']));
-			}
-		}
-	}
-
-	/**
 	 * [validate description]
 	 * @param  [type] $data     [description]
 	 * @param  array  $rules    [description]
@@ -253,7 +276,7 @@ class BaseModel extends Model
 		$validator = Validator::make($data, $rules, $messages);
 		if($validator->fails()) throw new ValidationException($validator->errors());
 		return true;
-	}	
+	}
 
 	/**
 	 * [scopeActive description]
@@ -303,12 +326,11 @@ class BaseModel extends Model
 
         if( $this->soft_delete )
         {
-			\DB::connection($this->connection)
-				->table($this->table)
+        	\DB::table($this->table)
         		->where($this->primaryKey, $this->id)
         		->update([
         			static::DELETED_AT	=>	date('Y-m-d H:i:s'),
-        			'deleted_by' 	=> 	auth()->guard(auth()->getDefaultDriver())->id(),
+        			'deleted_by' 	=> 	user()->id,
         			'deleted_from'	=>	$_SERVER['REMOTE_ADDR'],
         		]);
         }
@@ -333,5 +355,16 @@ class BaseModel extends Model
     public function getModifiedTimeAttribute($date)
 	{
 	    return \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date)->format('Y-m-d H:i:s');
+	}
+
+	/**
+	 * check attribute function
+	 *
+	 * @param [type] $attr
+	 * @return boolean
+	 */
+	public function hasAttribute($attr)
+	{
+		return array_key_exists($attr, $this->attributes);
 	}
 }
