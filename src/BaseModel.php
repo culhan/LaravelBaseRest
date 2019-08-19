@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Models;
+namespace KhanCode\LaravelBaseRest;
 
 use Request;
 use Validator;
