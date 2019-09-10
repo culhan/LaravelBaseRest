@@ -4,7 +4,7 @@ namespace KhanCode\LaravelBaseRest;
 
 use Request;
 use Validator;
-use App\Exceptions\ValidationException;
+use KhanCode\LaravelBaseRest\ValidationException;
 use Illuminate\Database\Eloquent\Model;
 
 class BaseModel extends Model
@@ -94,7 +94,7 @@ class BaseModel extends Model
 		$this->validate($request, [
             'search_column' => [
                 'required_with:search_text',
-                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
+                new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
             ],
             'search_text'   => ['required_with:search_column'],
         ]);
@@ -205,7 +205,7 @@ class BaseModel extends Model
 		$this->validate($request, [
             'distinct_column' => [
                 'filled',
-                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn+$this->relationColumn),
+                new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn+$this->relationColumn),
             ],
 		]);
 		
@@ -238,11 +238,11 @@ class BaseModel extends Model
 		$this->validate($request, [
             'sort_column' => [
                 'required_with:sort_type',
-                new \App\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
+                new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
             ],
             'sort_type'   => [
             	'required_with:sort_column',
-            	new \App\Rules\SortType(),
+            	new \KhanCode\LaravelBaseRest\Rules\SortType(),
             ],
     	]);
 		
@@ -367,4 +367,16 @@ class BaseModel extends Model
 	{
 		return array_key_exists($attr, $this->attributes);
 	}
+
+	/**
+	 * custom join function
+	 *
+	 * @param [type] $query
+	 * @param [type] $raw
+	 * @return void
+	 */
+	public function scopeJoinRaw($query,$raw)
+    {
+        return $query = $this->setTable(\DB::raw($this->table." ".$raw));
+    }
 }
