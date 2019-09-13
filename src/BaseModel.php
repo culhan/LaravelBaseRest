@@ -60,6 +60,13 @@ class BaseModel extends Model
 	public $timestamps = false;
 
 	/**
+	 * [$joinRaw description]
+	 *
+	 * @var [type]
+	 */
+	public $joinRaw = '';
+	
+	/**
 	 * [setSortableAndSearchableColumn description]
 	 * @param array $value [description]
 	 */
@@ -376,10 +383,9 @@ class BaseModel extends Model
 	 * @return void
 	 */
 	public function scopeJoinRaw($query,$raw)
-    {		
-		$thisClass = get_class($this);
-		$model = new $thisClass;
-		return $query->from(\DB::raw(''.$model->getTable().' '.$raw));
+    {	
+		$this->joinRaw = $raw;
+        return $query = $this->setTable(\DB::raw($this->table." ".$raw));
 	}
 	
 	/**
@@ -387,10 +393,10 @@ class BaseModel extends Model
 	 * @param  [type] $query [description]
 	 * @return [type]        [description]
 	 */
-	public function scopeIndex($query, $index_name, $type = FORCE)
+	public function scopeIndex($query, $index_name, $type = 'FORCE')
 	{
 		$thisClass = get_class($this);
-		$model = new $thisClass;
-		return $query->from(\DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.')'));
+		$model = new $thisClass;		
+		return $query->from(\DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.') '.$this->joinRaw));
 	}
 }
