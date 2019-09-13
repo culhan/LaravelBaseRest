@@ -376,7 +376,21 @@ class BaseModel extends Model
 	 * @return void
 	 */
 	public function scopeJoinRaw($query,$raw)
-    {
-        return $query = $this->setTable(\DB::raw($this->table." ".$raw));
-    }
+    {		
+		$thisClass = get_class($this);
+		$model = new $thisClass;
+		return $query->from(\DB::raw(''.$model->getTable().' '.$raw));
+	}
+	
+	/**
+	 * [scopeUseIndex description]
+	 * @param  [type] $query [description]
+	 * @return [type]        [description]
+	 */
+	public function scopeIndex($query, $index_name, $type = FORCE)
+	{
+		$thisClass = get_class($this);
+		$model = new $thisClass;
+		return $query->from(\DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.')'));
+	}
 }
