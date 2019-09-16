@@ -85,7 +85,7 @@ class BaseModel extends Model
 	public function scopeSetRelationColumn($query, $value=[])
 	{		
 		$this->relationColumn = $value;		
-		
+		$this->sortableAndSearchableColumn += $this->relationColumn; 
 	}
 
 	/**
@@ -212,7 +212,7 @@ class BaseModel extends Model
 		$this->validate($request, [
             'distinct_column' => [
                 'filled',
-                new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn+$this->relationColumn),
+                new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
             ],
 		]);
 		
