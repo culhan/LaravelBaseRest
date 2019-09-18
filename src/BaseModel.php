@@ -360,8 +360,8 @@ class BaseModel extends Model
      * @return [type]       [description]
      */
     public function getModifiedTimeAttribute($date)
-	{
-	    return \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', $date)->format('Y-m-d H:i:s');
+	{		
+		return \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', (is_null($date) ? '00-00-00 00:00:00' : $date) )->format('Y-m-d H:i:s');
 	}
 
 	/**
