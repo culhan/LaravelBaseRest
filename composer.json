@@ -38,6 +38,9 @@
             "aliases": {
                 "LaravelBaseRest": "KhanCode\\LaravelBaseRest\\Facades\\LaravelBaseRest"
             }
+        },
+        "branch-alias": {
+            "dev-master": "1.8-dev"
         }
     }
 }
