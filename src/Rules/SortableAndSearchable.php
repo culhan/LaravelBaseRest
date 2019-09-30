@@ -33,21 +33,7 @@ class SortableAndSearchable implements Rule
         $this->value = $value;
         if( is_array($value) )
         {
-            foreach ($value as $column) {
-                $this->value = $column;
-                if( !isset($this->sortAbleNSearchAbleColumn[$column]) )
-                {
-                    $this->notExist = 1;
-                    return false;
-                }
-                else
-                {
-                    if( !$this->sortAbleNSearchAbleColumn[$column] )
-                    {             
-                        return false;
-                    }
-                }
-            }
+            return $this->checkPassesArray($value);                        
         }
         else
         {
@@ -62,6 +48,38 @@ class SortableAndSearchable implements Rule
                 {             
                     return false;
                 }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * [checkPasses description]
+     *
+     * @param   Type  $data  [$var description]
+     *
+     * @return  [type]      [return description]
+     */
+    public function checkPassesArray($data)
+    {
+        foreach ($data as $column) {
+            $this->value = $column;
+            if( !is_array($column) ) {
+                if( !isset($this->sortAbleNSearchAbleColumn[$column]) )
+                {
+                    $this->notExist = 1;
+                    return false;
+                }
+                else
+                {
+                    if( !$this->sortAbleNSearchAbleColumn[$column] )
+                    {             
+                        return false;
+                    }
+                }
+            }else {
+                return $this->checkPassesArray($column);
             }
         }
 

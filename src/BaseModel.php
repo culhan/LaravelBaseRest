@@ -103,7 +103,7 @@ class BaseModel extends Model
                 'required_with:search_text',
                 new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
             ],
-            'search_text'   => ['required_with:search_column'],
+            'search_text'   => ['required_with:search_column'],			
         ]);
 
 		$queryOld = $this->getSql($query);
@@ -118,12 +118,12 @@ class BaseModel extends Model
 			if( is_array($request['search_column']) )
 			{				
 				foreach ($request['search_column'] as $arr_search_column => $value_search_column) {
-					$query = $this->searchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], array_get($request,'search_operator.'.$arr_search_column,'like'));
+					$query = $this->searchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], array_get($request,'search_operator.'.$arr_search_column,'like'), array_get($request,'search_conditions.'.$arr_search_column,'and') );
 				}	
 			}
 			else
 			{	
-				$query = $this->searchOperator($query, $request['search_column'], $request['search_text'], array_get($request,'search_operator','like'));
+				$query = $this->searchOperator($query, $request['search_column'], $request['search_text'], array_get($request,'search_operator','like'), array_get($request,'search_conditions','and') );
 			}
 		}
 
@@ -144,32 +144,47 @@ class BaseModel extends Model
 
 	/**
 	 * [searchOperator description]
-	 * @param  [type] $query    [description]
-	 * @param  [type] $column   [description]
-	 * @param  [type] $text     [description]
-	 * @param  string $operator [description]
-	 * @return [type]           [description]
+	 *
+	 * @param   [type]  $query       [$query description]
+	 * @param   [type]  $column      [$column description]
+	 * @param   [type]  $text        [$text description]
+	 * @param   [type]  $operator    [$operator description]
+	 * @param   [type]  $conditions  [$conditions description]
+	 *
+	 * @return  [type]               [return description]
 	 */
-	public function searchOperator($query, $column, $text, $operator = 'like')
-	{					
-		if( $operator == 'like' )
-			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
+	public function searchOperator($query, $column, $text, $operator = 'like', $conditions = 'and')
+	{	
+		$functionCondition = 'where';
+		if( $conditions == 'or')
+			$functionCondition = 'orWhere';
+					
+		if( is_array($column) ) {			
+			$query->{$functionCondition}(function ($query) use ($column,$text,$operator,$conditions) {
+				foreach ($column as $arr_search_column => $value_search_column) {
+					$query = $this->searchOperator($query, $value_search_column, $text[$arr_search_column], array_get($operator,$arr_search_column,'like'), array_get($conditions,$arr_search_column,'and') );
+				}
+			});
+		}else {
+			if( $operator == 'like' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
 
-		if( $operator == '=' )
-			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'=',$text);
+			if( $operator == '=' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'=',$text);
 
-		if( $operator == '>=' )
-			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'>=',$text);
+			if( $operator == '>=' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'>=',$text);
 
-		if( $operator == '<=' )
-			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'<=',$text);
+			if( $operator == '<=' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<=',$text);
 
-		if( $operator == '>' )
-			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'>',$text);
+			if( $operator == '>' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'>',$text);
 
-		if( $operator == '<' )
-			$query->where(\DB::raw($this->sortableAndSearchableColumn[$column]),'<',$text);
-
+			if( $operator == '<' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<',$text);
+		}		
+		
 		return $query;
 	}
 
