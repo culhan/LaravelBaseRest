@@ -183,6 +183,9 @@ class BaseModel extends Model
 
 			if( $operator == '<' )
 				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<',$text);
+
+			if( $operator == '<>' )
+				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<',$text);
 		}		
 		
 		return $query;
