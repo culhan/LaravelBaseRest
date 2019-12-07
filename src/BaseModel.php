@@ -299,7 +299,7 @@ class BaseModel extends Model
 		$rules = empty($rules) ? self::$rules : $rules;  
 		if(empty($rules)) return true;
 		$validator = Validator::make($data, $rules, $messages);
-		if($validator->fails()) throw new ValidationException($validator->errors());
+		if($validator->fails()) \KhanCode\LaravelBaseRest\Helpers::set_error($validator->errors()->toArray());
 		return true;
 	}
 
