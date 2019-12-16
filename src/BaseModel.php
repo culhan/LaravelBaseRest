@@ -93,11 +93,11 @@ class BaseModel extends Model
 	 * @param string $value [description]
 	 */
 	public function scopeSearch($query)
-	{		
+	{				
 		if(empty($this->sortableAndSearchableColumn)) return $query;
 		
 		$request = Request::all();
-
+		
 		$this->validate($request, [
             'search_column' => [
                 'required_with:search_text',
@@ -106,6 +106,8 @@ class BaseModel extends Model
             'search_text'   => ['required_with:search_column'],			
         ]);
 
+		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+		
 		$queryOld = $this->getSql($query);
 		$thisClass = get_class($this);
 		$model = new $thisClass;
@@ -132,7 +134,7 @@ class BaseModel extends Model
 			$sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
 			$query->where(function ($query) use ($sortableAndSearchableColumn,$request) {
 				foreach ($sortableAndSearchableColumn as $key => $value) {                	
-                	if($value)$query->orWhere(\DB::raw($value), 'like', '%'.$request['search'].'%');
+                	if($value)$query->orWhere(\DB::raw('`'.$value.'`'), 'like', '%'.$request['search'].'%');
 				}
             });
 
@@ -167,25 +169,25 @@ class BaseModel extends Model
 			});
 		}else {
 			if( $operator == 'like' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'like','%'.$text.'%');
 
 			if( $operator == '=' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'=',$text);
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'=',$text);
 
 			if( $operator == '>=' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'>=',$text);
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'>=',$text);
 
 			if( $operator == '<=' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<=',$text);
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<=',$text);
 
 			if( $operator == '>' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'>',$text);
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'>',$text);
 
 			if( $operator == '<' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<',$text);
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
 
 			if( $operator == '<>' )
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'<',$text);
+				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
 		}		
 		
 		return $query;
@@ -276,12 +278,12 @@ class BaseModel extends Model
 			if( is_array($request['sort_column']) )
 			{
 				foreach ($request['sort_column'] as $key_sort_column => $value_sort_column) {
-					$query->orderBy($this->sortableAndSearchableColumn[$value_sort_column],$request['sort_type'][$key_sort_column]);
+					$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$value_sort_column].'`'),$request['sort_type'][$key_sort_column]);
 				}
 			}
 			else
 			{
-				$query->orderBy($this->sortableAndSearchableColumn[$request['sort_column']],$request['sort_type']);
+				$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$request['sort_column']].'`'),$request['sort_type']);
 			}
 		}
 
@@ -298,8 +300,8 @@ class BaseModel extends Model
 	{
 		$rules = empty($rules) ? self::$rules : $rules;  
 		if(empty($rules)) return true;
-		$validator = Validator::make($data, $rules, $messages);
-		if($validator->fails()) \KhanCode\LaravelBaseRest\Helpers::set_error($validator->errors()->toArray());
+		$validator = Validator::make($data, $rules, $messages);		
+		if($validator->fails()) \KhanCode\LaravelBaseRest\Helpers::set_error($validator->errors()->toArray());		
 		return true;
 	}
 
