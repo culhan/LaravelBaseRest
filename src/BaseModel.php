@@ -85,7 +85,25 @@ class BaseModel extends Model
 	public function scopeSetRelationColumn($query, $value=[])
 	{		
 		$this->relationColumn = $value;		
-		$this->sortableAndSearchableColumn += $this->relationColumn; 
+		$this->sortableAndSearchableColumn += $this->relationColumn; 		
+				
+		if( Request::has('distinct_column') ) {
+
+			$this->validate(Request::all(), [
+				'distinct_column' => [
+					'filled',
+					new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
+				],
+			]);
+
+			if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+
+			$this->sortableAndSearchableColumn = [];
+			foreach (Request::get('distinct_column') as $key => $value) {
+				$this->sortableAndSearchableColumn[$value] = $value;
+			}
+
+		}
 	}
 
 	/**
@@ -227,14 +245,7 @@ class BaseModel extends Model
 	 */
 	public function scopeDistinct($query,$data=null)
 	{
-		$request = Request::all();		
-		
-		$this->validate($request, [
-            'distinct_column' => [
-                'filled',
-                new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn),
-            ],
-		]);
+		$request = Request::all();				
 		
 		if(!empty($data)) {
 			$request['distinct_column'] = $data;
@@ -245,7 +256,7 @@ class BaseModel extends Model
 			if( is_array($request['distinct_column']) )
 			{
 				$colsDistinct = implode(',',$request['distinct_column']);
-				$query->select(\DB::raw('distinct '.$colsDistinct));
+				$query->select(\DB::raw('distinct '.$colsDistinct));								
 			}
 			else
 			{
@@ -254,18 +265,26 @@ class BaseModel extends Model
 
 			$queryOld = $this->getSql($query);
 			$thisClass = get_class($this);
-			return $query = (new $thisClass)->setTable(\DB::raw('('.$queryOld.') as myTableDistinct'))->whereRaw("1=1");
+			$model = new $thisClass;
+			$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
+			$model->setRelationColumn( $this->relationColumn );
+			return $query = $model->setTable(\DB::raw('('.$queryOld.') as myTableDistinct'))->whereRaw("1=1");
 		}
 	}
 
 	/**
-	 * [FunctionName description]
-	 * @param string $value [description]
+	 * [scopeSort description]
+	 *
+	 * @param   [type]  $query           [$query description]
+	 * @param   [type]  $default_column  [$default_column description]
+	 * @param   [type]  $default_type    [$default_type description]
+	 *
+	 * @return  [type]                   [return description]
 	 */
-	public function scopeSort($query)
+	public function scopeSort($query,$default_column,$default_type = 'DESC')
 	{
 		$request = Request::all();
-
+		
 		$this->validate($request, [
             'sort_column' => [
                 'required_with:sort_type',
@@ -277,6 +296,8 @@ class BaseModel extends Model
             ],
     	]);
 		
+		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+
 		if( !empty($request['sort_column']) && !empty($request['sort_type']) )
 		{
 			if( is_array($request['sort_column']) )
@@ -286,9 +307,11 @@ class BaseModel extends Model
 				}
 			}
 			else
-			{
+			{				
 				$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$request['sort_column']].'`'),$request['sort_type']);
 			}
+		}else {
+			$query->orderBy(\DB::raw('`'.$default_column.'`'),$default_type);
 		}
 
 	}
