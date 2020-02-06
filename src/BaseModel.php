@@ -281,7 +281,7 @@ class BaseModel extends Model
 	 *
 	 * @return  [type]                   [return description]
 	 */
-	public function scopeSort($query,$default_column,$default_type = 'DESC')
+	public function scopeSort($query,$default_column = 'id',$default_type = 'DESC')
 	{
 		$request = Request::all();
 		
