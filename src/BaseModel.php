@@ -251,6 +251,10 @@ class BaseModel extends Model
 			{
 				$query->select(\DB::raw('distinct '.$request['distinct_column']));
 			}
+
+			$queryOld = $this->getSql($query);
+			$thisClass = get_class($this);
+			return $query = (new $thisClass)->setTable(\DB::raw('('.$queryOld.') as myTableDistinct'))->whereRaw("1=1");
 		}
 	}
 
