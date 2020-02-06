@@ -255,12 +255,12 @@ class BaseModel extends Model
 		{
 			if( is_array($request['distinct_column']) )
 			{
-				$colsDistinct = implode(',',$request['distinct_column']);
-				$query->select(\DB::raw('distinct '.$colsDistinct));								
+				$colsDistinct = implode('`,`',$request['distinct_column']);
+				$query->select(\DB::raw('distinct `'.$colsDistinct.'`'));								
 			}
 			else
 			{
-				$query->select(\DB::raw('distinct '.$request['distinct_column']));
+				$query->select(\DB::raw('distinct `'.$request['distinct_column'].'`'));
 			}
 
 			$queryOld = $this->getSql($query);
@@ -310,8 +310,8 @@ class BaseModel extends Model
 			{				
 				$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$request['sort_column']].'`'),$request['sort_type']);
 			}
-		}else {
-			$query->orderBy(\DB::raw('`'.(empty($default_column) ? $this->getKeyName():$default_column).'`'),$default_type);
+		}else {			
+			if(!empty($this->sortableAndSearchableColumn[$this->getKeyName()])) $query->orderBy(\DB::raw('`'.(empty($default_column) ? $this->getKeyName():$default_column).'`'),$default_type);
 		}
 
 	}
