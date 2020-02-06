@@ -281,7 +281,7 @@ class BaseModel extends Model
 	 *
 	 * @return  [type]                   [return description]
 	 */
-	public function scopeSort($query,$default_column = 'id',$default_type = 'DESC')
+	public function scopeSort($query,$default_column = NULL,$default_type = 'DESC')
 	{
 		$request = Request::all();
 		
@@ -311,7 +311,7 @@ class BaseModel extends Model
 				$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$request['sort_column']].'`'),$request['sort_type']);
 			}
 		}else {
-			$query->orderBy(\DB::raw('`'.$default_column.'`'),$default_type);
+			$query->orderBy(\DB::raw('`'.(empty($default_column) ? $this->getKeyName():$default_column).'`'),$default_type);
 		}
 
 	}
