@@ -107,6 +107,24 @@ class BaseModel extends Model
 	}
 
 	/**
+	 * [encapsulatedQuery description]
+	 *
+	 * @param   [type]  $alias  [$alias description]
+	 *
+	 * @return  [type]          [return description]
+	 */
+	public function scopeEncapsulatedQuery($query, $alias = 'myTable')
+	{
+		$queryOld = $this->getSql($query);
+		$thisClass = get_class($this);
+		$model = new $thisClass;
+		$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
+		$model->setRelationColumn( $this->relationColumn );
+		$query = $model->setTable(\DB::raw('('.$queryOld.') as '.$alias))->whereRaw("1=1");
+		return $query;
+	}
+
+	/**
 	 * [FunctionName description]
 	 * @param string $value [description]
 	 */
@@ -126,12 +144,7 @@ class BaseModel extends Model
 
 		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 		
-		$queryOld = $this->getSql($query);
-		$thisClass = get_class($this);
-		$model = new $thisClass;
-		$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
-		$model->setRelationColumn( $this->relationColumn );
-		$query = $model->setTable(\DB::raw('('.$queryOld.') as myTable'))->whereRaw("1=1");
+		$query = $query->encapsulatedQuery('myTable');
 
 		if( isset($request['search_column']) && isset($request['search_text']) )
 		{
@@ -263,12 +276,7 @@ class BaseModel extends Model
 				$query->select(\DB::raw('distinct `'.$request['distinct_column'].'`'));
 			}
 
-			$queryOld = $this->getSql($query);
-			$thisClass = get_class($this);
-			$model = new $thisClass;
-			$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
-			$model->setRelationColumn( $this->relationColumn );
-			return $query = $model->setTable(\DB::raw('('.$queryOld.') as myTableDistinct'))->whereRaw("1=1");
+			return $query->encapsulatedQuery('myTableDistinct');			
 		}
 	}
 
