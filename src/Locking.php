@@ -2,7 +2,7 @@
 
 namespace KhanCode\LaravelBaseRest;
 
-// use Config;
+use Config;
 use Illuminate\Support\Facades\Cache;
 
 class Locking
