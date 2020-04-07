@@ -48,4 +48,40 @@ class Helpers
         }
         return true;
     }
+
+    /**
+	 * [isJson description]
+	 *
+	 * @param   [type]  $string  [$string description]
+	 *
+	 * @return  [type]           [return description]
+	 */
+	static function isJson($string) {
+		if(!is_string($string)) return false;
+		$res = json_decode($string);
+		return (json_last_error() == JSON_ERROR_NONE && $res != $string);
+	}
+
+	/**
+	 * [json_decode_array description]
+	 *
+	 * @param   [type]  $input  [$input description]
+	 *
+	 * @return  [type]          [return description]
+	 */
+	static function json_decode_recursive($input, $array_or_object = true) { 
+		if( is_array($input) || is_object($input) ){						
+			foreach ($input as $key => $value) {					
+				if( isJson($value) || is_array($value) || is_object($value) ) {
+					$input[$key] = self::json_decode_recursive($value, $array_or_object);
+				}
+			}
+		}elseif(isJson($input)) {			
+			$from_json =  json_decode($input, $array_or_object);  			
+			$input = ($from_json) ? $from_json : $input;						
+			$input = self::json_decode_recursive($input, $array_or_object);			
+		}
+
+		return $input;
+	}
 }
