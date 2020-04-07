@@ -56,8 +56,8 @@ class Helpers
 	 *
 	 * @return  [type]           [return description]
 	 */
-	static function isJson($string) {
-		if(!is_string($string)) return false;
+	static function isJson($string) {		
+		if( !is_string($string)  || empty($string) || $string == "[]") return false;
 		$res = json_decode($string);
 		return (json_last_error() == JSON_ERROR_NONE && $res != $string);
 	}
@@ -70,16 +70,23 @@ class Helpers
 	 * @return  [type]          [return description]
 	 */
 	static function json_decode_recursive($input, $array_or_object = false) { 
-		if( is_array($input) || is_object($input) ){						
+		if( is_array($input) || is_object($input) ){									
 			foreach ($input as $key => $value) {					
-				if( isJson($value) || is_array($value) || is_object($value) ) {
-					$input[$key] = self::json_decode_recursive($value, $array_or_object);
+				if( self::isJson($value) || is_array($value) || is_object($value) ) {
+					if(is_object($input)) {
+						$input->{$key} = self::json_decode_recursive($value, $array_or_object);
+					}
+					if(is_array($input)) {
+						$input[$key] = self::json_decode_recursive($value, $array_or_object);
+					}
 				}
 			}
-		}elseif(isJson($input)) {			
-			$from_json =  json_decode($input, $array_or_object);  			
+		}elseif(self::isJson($input)) {	
+			$from_json =  json_decode($input, $array_or_object);
 			$input = ($from_json) ? $from_json : $input;						
 			$input = self::json_decode_recursive($input, $array_or_object);			
+		}else {
+			$input = json_decode($input, $array_or_object);
 		}
 
 		return $input;
