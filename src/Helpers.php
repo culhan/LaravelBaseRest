@@ -69,7 +69,7 @@ class Helpers
 	 *
 	 * @return  [type]          [return description]
 	 */
-	static function json_decode_recursive($input, $array_or_object = true) { 
+	static function json_decode_recursive($input, $array_or_object = false) { 
 		if( is_array($input) || is_object($input) ){						
 			foreach ($input as $key => $value) {					
 				if( isJson($value) || is_array($value) || is_object($value) ) {
