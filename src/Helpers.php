@@ -80,6 +80,15 @@ class Helpers
 						$input[$key] = self::json_decode_recursive($value, $array_or_object);
 					}
 				}
+				// tambahan untuk cast as numeric
+				if( is_numeric($value) ){
+					if(is_object($input)) {
+						$input->{$key} = $value+0;
+					}
+					if(is_array($input)) {						
+						$input[$key] = $value+0;
+					}
+				}
 			}
 		}elseif(self::isJson($input)) {	
 			$from_json =  json_decode($input, $array_or_object);
