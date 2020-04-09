@@ -69,35 +69,26 @@ class Helpers
 	 *
 	 * @return  [type]          [return description]
 	 */
-	static function json_decode_recursive($input, $array_or_object = false) { 
-		if( is_array($input) || is_object($input) ){									
+	static function json_decode_recursive($input, $array_or_object = false) { 				
+		if( is_array($input) || is_object($input) ){											
 			foreach ($input as $key => $value) {					
-				if( self::isJson($value) || is_array($value) || is_object($value) ) {
-					if(is_object($input)) {
-						$input->{$key} = self::json_decode_recursive($value, $array_or_object);
-					}
-					if(is_array($input)) {
-						$input[$key] = self::json_decode_recursive($value, $array_or_object);
-					}
+				if( self::isJson($value) || is_array($value) || is_object($value) ) {					
+					$value = self::json_decode_recursive($value, $array_or_object);
+				}else if( is_numeric($value) ){
+					$value += 0;
+				}else if( $value == "[]") {
+					$value = [];
 				}
-				// tambahan untuk cast as numeric
-				if( is_numeric($value) ){
-					if(is_object($input)) {
-						$input->{$key} = $value+0;
-					}
-					if(is_array($input)) {						
-						$input[$key] = $value+0;
-					}
-				}
+				if(is_object($input)) $input->{$key} = $value;
+				if(is_array($input)) $input[$key] = $value;
 			}
-		}elseif(self::isJson($input)) {	
+		}elseif(self::isJson($input)) {				
 			$from_json =  json_decode($input, $array_or_object);
 			$input = ($from_json) ? $from_json : $input;						
-			$input = self::json_decode_recursive($input, $array_or_object);			
-		}else {
+			$input = self::json_decode_recursive($input, $array_or_object);					
+		}else {									
 			$input = json_decode($input, $array_or_object);
-		}
-
+		}		
 		return $input;
 	}
 }
