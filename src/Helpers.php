@@ -74,8 +74,6 @@ class Helpers
 			foreach ($input as $key => $value) {					
 				if( self::isJson($value) || is_array($value) || is_object($value) ) {					
 					$value = self::json_decode_recursive($value, $array_or_object);
-				}else if( is_numeric($value) ){
-					$value += 0;
 				}else if( $value == "[]") {
 					$value = [];
 				}
