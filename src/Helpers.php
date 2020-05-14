@@ -57,6 +57,7 @@ class Helpers
 	 * @return  [type]           [return description]
 	 */
 	static function isJson($string) {		
+		$string = htmlspecialchars($string);
 		if( !is_string($string)  || empty($string) || $string == "[]") return false;
 		$res = json_decode($string);
 		return (json_last_error() == JSON_ERROR_NONE && $res != $string);
