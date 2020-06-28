@@ -440,7 +440,7 @@ class BaseModel extends Model
 	public function scopeJoinRaw($query,$raw)
     {	
 		$this->joinRaw = $raw;
-        return $query = $this->setTable(\DB::raw($this->table." ".$raw));
+        return $query = $this->setTable(\DB::raw(strtok($this->table, ' ')." ".$raw));
 	}
 	
 	/**
