@@ -129,16 +129,6 @@ trait PassportToken
 
         $bearerToken = $this->sendBearerTokenResponse($passportToken['access_token'], $passportToken['refresh_token']);
 
-        if(!empty($user)) {
-            \Illuminate\Support\Facades\Cache::forever("userdata_".$user->id, $user->getAll()->find($user->id));
-
-            return [            
-                    'data'  =>  (new \App\Http\Resources\CustomerResource($user)),
-                    'status'    =>  200,
-                    'error' =>  0,
-                ]+json_decode($bearerToken->getBody()->__toString(), true);
-        }else {
-            return json_decode($bearerToken->getBody()->__toString(), true);
-        }
+        return json_decode($bearerToken->getBody()->__toString(), true);
     }
 }
