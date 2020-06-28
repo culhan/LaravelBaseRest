@@ -13,7 +13,7 @@
     "keywords": ["Laravel", "LaravelBaseRest"],
     "require": {
         "laravel/framework": ">=5.5.0",
-        "laravel/passport": "^4.0",
+        "laravel/passport": ">=4.0",
         "illuminate/support": "~5"
     },
     "require-dev": {
