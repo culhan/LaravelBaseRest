@@ -76,27 +76,14 @@ trait PassportToken
 
     protected function createPassportTokenByUser($user = NULL, $clientId)
     {
-        if( !empty($user) ) {
-            $accessToken = new AccessToken($user->id);
-            $accessToken->setIdentifier($this->generateUniqueIdentifier());
-            $accessToken->setClient(new Client($clientId, null, null));
-            $accessToken->setExpiryDateTime((new DateTime())->add(Passport::tokensExpireIn()));
-            $accessTokenRepository = new AccessTokenRepository(new TokenRepository(), new Dispatcher());
-            $accessTokenRepository->persistNewAccessToken($accessToken);
-            $refreshToken = $this->issueRefreshToken($accessToken);
-        }else {
-            $accessTokenRepository = new AccessTokenRepository(new TokenRepository(), new Dispatcher());
-            $client = new Client($clientId, null, null);
-            $accessToken = $accessTokenRepository->getNewToken($client, [], null);            
-            $accessToken->setClient($client);
-            $accessToken->setUserIdentifier(null);
-            $accessToken->setExpiryDateTime((new DateTime())->add(Passport::tokensExpireIn()));
-            $accessToken->setIdentifier($this->generateUniqueIdentifier());
-            $refreshToken = $this->issueRefreshToken($accessToken);
-        }
-
+        $accessToken = new AccessToken( !empty($user->id)??NULL );
+        $accessToken->setIdentifier($this->generateUniqueIdentifier());
+        $accessToken->setClient(new Client($clientId, null, null));
+        $accessToken->setExpiryDateTime((new DateTime())->add(Passport::tokensExpireIn()));
+        $accessTokenRepository = new AccessTokenRepository(new TokenRepository(), new Dispatcher());
+        $accessTokenRepository->persistNewAccessToken($accessToken);
+        $refreshToken = $this->issueRefreshToken($accessToken);
         
-
         return [
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
@@ -129,16 +116,6 @@ trait PassportToken
 
         $bearerToken = $this->sendBearerTokenResponse($passportToken['access_token'], $passportToken['refresh_token']);
 
-        if(!empty($user)) {
-            \Illuminate\Support\Facades\Cache::forever("userdata_".$user->id, $user->getAll()->find($user->id));
-
-            return [            
-                    'data'  =>  (new \App\Http\Resources\CustomerResource($user)),
-                    'status'    =>  200,
-                    'error' =>  0,
-                ]+json_decode($bearerToken->getBody()->__toString(), true);
-        }else {
-            return json_decode($bearerToken->getBody()->__toString(), true);
-        }
+        return json_decode($bearerToken->getBody()->__toString(), true);
     }
 }
