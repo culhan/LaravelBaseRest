@@ -76,27 +76,14 @@ trait PassportToken
 
     protected function createPassportTokenByUser($user = NULL, $clientId)
     {
-        if( !empty($user) ) {
-            $accessToken = new AccessToken($user->id);
-            $accessToken->setIdentifier($this->generateUniqueIdentifier());
-            $accessToken->setClient(new Client($clientId, null, null));
-            $accessToken->setExpiryDateTime((new DateTime())->add(Passport::tokensExpireIn()));
-            $accessTokenRepository = new AccessTokenRepository(new TokenRepository(), new Dispatcher());
-            $accessTokenRepository->persistNewAccessToken($accessToken);
-            $refreshToken = $this->issueRefreshToken($accessToken);
-        }else {
-            $accessTokenRepository = new AccessTokenRepository(new TokenRepository(), new Dispatcher());
-            $client = new Client($clientId, null, null);
-            $accessToken = $accessTokenRepository->getNewToken($client, [], null);            
-            $accessToken->setClient($client);
-            $accessToken->setUserIdentifier(null);
-            $accessToken->setExpiryDateTime((new DateTime())->add(Passport::tokensExpireIn()));
-            $accessToken->setIdentifier($this->generateUniqueIdentifier());
-            $refreshToken = $this->issueRefreshToken($accessToken);
-        }
-
+        $accessToken = new AccessToken( !empty($user->id)??NULL );
+        $accessToken->setIdentifier($this->generateUniqueIdentifier());
+        $accessToken->setClient(new Client($clientId, null, null));
+        $accessToken->setExpiryDateTime((new DateTime())->add(Passport::tokensExpireIn()));
+        $accessTokenRepository = new AccessTokenRepository(new TokenRepository(), new Dispatcher());
+        $accessTokenRepository->persistNewAccessToken($accessToken);
+        $refreshToken = $this->issueRefreshToken($accessToken);
         
-
         return [
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
