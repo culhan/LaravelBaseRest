@@ -57,8 +57,8 @@ class Helpers
 	 * @return  [type]           [return description]
 	 */
 	static function isJson($string) {		
-		$string = htmlspecialchars($string);
 		if( !is_string($string)  || empty($string) || $string == "[]") return false;
+		$string = htmlspecialchars_decode($string);
 		$res = json_decode($string);
 		return (json_last_error() == JSON_ERROR_NONE && $res != $string);
 	}
@@ -75,8 +75,8 @@ class Helpers
 			foreach ($input as $key => $value) {					
 				if( self::isJson($value) || is_array($value) || is_object($value) ) {					
 					$value = self::json_decode_recursive($value, $array_or_object);
-				}else if( is_numeric($value) && strpos($value, ".") === false ){
-					$value += 0;					
+				}else if( is_numeric($value) ){
+					$value += 0;
 				}else if( $value == "[]") {
 					$value = [];
 				}
