@@ -204,6 +204,7 @@ class BaseModel extends Model
 				$text = strtolower($text);
 				
 				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
+				
 			if( $operator == '=' )
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'=',$text);
 
