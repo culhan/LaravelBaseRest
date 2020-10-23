@@ -221,7 +221,13 @@ class BaseModel extends Model
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
 
 			if( $operator == '<>' )
-				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
+                $query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
+                
+            if( $operator == 'null' )
+                $query->{$functionCondition.'Null'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
+            
+            if( $operator == 'not null' )
+				$query->{$functionCondition.'NotNull'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
 		}		
 		
 		return $query;
