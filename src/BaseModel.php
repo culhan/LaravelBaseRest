@@ -199,35 +199,28 @@ class BaseModel extends Model
 				}
 			});
 		}else {
-			if( $operator == 'like' )
+			if( $operator == 'like' ) {
 				$this->sortableAndSearchableColumn[$column] = 'LOWER(`'.$this->sortableAndSearchableColumn[$column].'`)';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
-				
-			if( $operator == '=' )
+                $query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
+            }else if( $operator == '=' ) {
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'=',$text);
-
-			if( $operator == '>=' )
+            }else if( $operator == '>=' ) {
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'>=',$text);
-
-			if( $operator == '<=' )
+			}else if( $operator == '<=' ) {
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<=',$text);
-
-			if( $operator == '>' )
+            }else if( $operator == '>' ) {
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'>',$text);
-
-			if( $operator == '<' )
+            }else if( $operator == '<' ) {
 				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
-
-			if( $operator == '<>' )
+            }else if( $operator == '<>' ) {
                 $query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
-                
-            if( $operator == 'null' )
+            }else if( $operator == 'null' ) {
                 $query->{$functionCondition.'Null'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
-            
-            if( $operator == 'not null' )
-				$query->{$functionCondition.'NotNull'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
+            }else if( $operator == 'not null' ) {
+                $query->{$functionCondition.'NotNull'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
+            }
 		}		
 		
 		return $query;
