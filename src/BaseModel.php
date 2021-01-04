@@ -40,6 +40,20 @@ class BaseModel extends Model
      */
     const DELETED_AT = 'deleted_time';
 
+    /**
+     * The name of the "deleted by" column.
+     *
+     * @var string
+     */
+    const DELETED_BY = 'deleted_by';
+
+    /**
+     * The name of the "deleted from" column.
+     *
+     * @var string
+     */
+    const DELETED_FROM = 'deleted_from';
+
 	/**
 	 * [$sortableAndSearchableColumn description]
 	 * @var array
@@ -394,8 +408,8 @@ class BaseModel extends Model
         		->where($this->primaryKey, $this->id)
         		->update([
         			static::DELETED_AT	=>	date('Y-m-d H:i:s'),
-        			'deleted_by' 	=> 	user()->id,
-        			'deleted_from'	=>	$_SERVER['REMOTE_ADDR'],
+        			static::DELETED_BY 	=> 	user()->id,
+        			static::DELETED_FROM    =>	$_SERVER['REMOTE_ADDR'],
         		]);
         }
         else
