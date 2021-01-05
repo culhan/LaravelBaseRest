@@ -469,5 +469,6 @@ class BaseModel extends Model
 		$thisClass = get_class($this);
 		$model = new $thisClass;		
 		return $query->from(\DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.') '.$this->joinRaw));
-	}
-}
+    }
+    
+} 
