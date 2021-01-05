@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class BaseModel extends Model
 {
-	protected $guarded	= 	[];
+	protected $guarded	= [];
 	
-	protected $soft_delete 	=	false;
+	protected $soft_delete 	= false;
 
-	protected $with_log	=	false;
+	protected $with_log	= false;
 	
 	protected $casts = ['created_at' => 'string'];
 
