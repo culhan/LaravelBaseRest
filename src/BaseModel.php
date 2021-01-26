@@ -4,16 +4,17 @@ namespace KhanCode\LaravelBaseRest;
 
 use Request;
 use Validator;
-use KhanCode\LaravelBaseRest\ValidationException;
+use KhanCode\LaravelBaseRest\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
+use KhanCode\LaravelBaseRest\ValidationException;
 
 class BaseModel extends Model
 {
-	protected $guarded	= [];
+	protected $guarded	= 	[];
 	
-	protected $soft_delete 	= false;
+	protected $soft_delete 	=	false;
 
-	protected $with_log	= false;
+	protected $with_log	=	false;
 	
 	protected $casts = ['created_at' => 'string'];
 
@@ -40,20 +41,6 @@ class BaseModel extends Model
      */
     const DELETED_AT = 'deleted_time';
 
-    /**
-     * The name of the "deleted by" column.
-     *
-     * @var string
-     */
-    const DELETED_BY = 'deleted_by';
-
-    /**
-     * The name of the "deleted from" column.
-     *
-     * @var string
-     */
-    const DELETED_FROM = 'deleted_from';
-
 	/**
 	 * [$sortableAndSearchableColumn description]
 	 * @var array
@@ -79,14 +66,17 @@ class BaseModel extends Model
 	 * @var [type]
 	 */
 	public $joinRaw = '';
-	
+
 	/**
 	 * [setSortableAndSearchableColumn description]
 	 * @param array $value [description]
 	 */
 	public function scopeSetSortableAndSearchableColumn($query, $value=[])
 	{
-		$this->sortableAndSearchableColumn = $value;
+        $this->sortableAndSearchableColumn = $value;
+        $query = $query->setBuilderSortableAndSearchableColumn($value);
+
+        return $query;
 	}
 
 	/**
@@ -127,16 +117,35 @@ class BaseModel extends Model
 	 *
 	 * @return  [type]          [return description]
 	 */
-	public function scopeEncapsulatedQuery($query, $alias = 'myTable')
+    public function scopeEncapsulatedQuery($query, $alias = 'myTable')
 	{
-		$queryOld = $this->getSql($query);
-		$thisClass = get_class($this);
-		$model = new $thisClass;
-		$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
-		$model->setRelationColumn( $this->relationColumn );
-		$query = $model->setTable(\DB::raw('('.$queryOld.') as '.$alias))->whereRaw("1=1");
+        // if( !empty($query->getQuery()->unions) ){
+        //     $queryOld = $this->getSql($query);
+        //     $thisClass = get_class($this);
+        //     $model = new $thisClass;
+        //     $model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
+        //     $model->setRelationColumn( $this->relationColumn );
+        //     $query = $model->setTable(\DB::raw('('.$queryOld.') as '.$alias))->whereRaw("1=1");
+        // }
 		return $query;
-	}
+    }
+    
+	// public function scopeEncapsulatedQuery($query, $alias = 'myTable')
+	// {
+    //     $queryOld = $this->getSql($query);
+        
+    //     $thisClass = get_class($this);
+    //     $thisClassExploded = explode('\\',$thisClass);
+    //     $uuidview = Viewing::set($thisClassExploded[count($thisClassExploded)-1]);
+    //     \DB::statement(\DB::raw('create or replace view `'.$uuidview.'` as ('.$queryOld.')'));
+
+	// 	$thisClass = get_class($this);
+	// 	$model = new $thisClass;
+	// 	$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
+    //     $model->setRelationColumn( $this->relationColumn );
+	// 	$query = $model->setTable($uuidview)->whereRaw("1=1")->setViewingUuid($uuidview);
+	// 	return $query;
+	// }
 
 	/**
 	 * [FunctionName description]
@@ -158,8 +167,8 @@ class BaseModel extends Model
 
 		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 		
-		$query = $query->encapsulatedQuery('myTable');
-
+		$query = $query->setUseSearch(1)->encapsulatedQuery('myTable');
+        
 		if( isset($request['search_column']) && isset($request['search_text']) )
 		{
 			if( is_array($request['search_column']) )
@@ -176,14 +185,20 @@ class BaseModel extends Model
 
 		if( !empty($request['search']) )
 		{			
-			$sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
-			$query->where(function ($query) use ($sortableAndSearchableColumn,$request) {
+            $sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
+            $mappingSelect = $query->getQuery()->mappingSelect;
+			$query->where(function ($query) use ($sortableAndSearchableColumn, $request, $mappingSelect) {
+                $query->setBuilderSortableAndSearchableColumn($sortableAndSearchableColumn)
+                    ->setMappingSelect($mappingSelect);
+
 				foreach ($sortableAndSearchableColumn as $key => $value) {                	
-                	if($value)$query->orWhere(\DB::raw('`'.$value.'`'), 'like', '%'.$request['search'].'%');
+                    if($value){
+                        $this->searchOperator($query, $value, $request['search'], 'like', 'or' );
+                    }
 				}
             });
 
-		}
+        }
         
         return $query;
 
@@ -206,34 +221,35 @@ class BaseModel extends Model
 		if( $conditions == 'or')
 			$functionCondition = 'orWhere';
 					
-		if( is_array($column) ) {			
-			$query->{$functionCondition}(function ($query) use ($column,$text,$operator,$conditions) {
+		if( is_array($column) ) {
+            $sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
+            $mappingSelect = $query->getQuery()->mappingSelect;
+            
+			$query->{$functionCondition}(function ($query) use ($column,$text,$operator,$conditions, $sortableAndSearchableColumn, $mappingSelect) {
+                $query->setBuilderSortableAndSearchableColumn($sortableAndSearchableColumn)
+                    ->setMappingSelect($mappingSelect);
 				foreach ($column as $arr_search_column => $value_search_column) {
 					$query = $this->searchOperator($query, $value_search_column, $text[$arr_search_column], array_get($operator,$arr_search_column,'like'), array_get($conditions,$arr_search_column,'and') );
 				}
 			});
 		}else {
-			if( $operator == 'like' ) {
-				$this->sortableAndSearchableColumn[$column] = 'LOWER(`'.$this->sortableAndSearchableColumn[$column].'`)';
+			if( $operator == 'like' ){
+				$this->sortableAndSearchableColumn[$column] = 'LOWER('.$this->sortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-                $query->{$functionCondition}(\DB::raw($this->sortableAndSearchableColumn[$column]),'like','%'.$text.'%');
-            }else if( $operator == '=' ) {
-				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'=',$text);
-            }else if( $operator == '>=' ) {
-				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'>=',$text);
-			}else if( $operator == '<=' ) {
-				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<=',$text);
-            }else if( $operator == '>' ) {
-				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'>',$text);
-            }else if( $operator == '<' ) {
-				$query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
-            }else if( $operator == '<>' ) {
-                $query->{$functionCondition}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'),'<',$text);
-            }else if( $operator == 'null' ) {
-                $query->{$functionCondition.'Null'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
-            }else if( $operator == 'not null' ) {
-                $query->{$functionCondition.'NotNull'}(\DB::raw('`'.$this->sortableAndSearchableColumn[$column].'`'));
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+            }else if( $operator == '=' ){
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'=',$text);
+            }else if( $operator == '>=' ){
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'>=',$text);
+            }else if( $operator == '<=' ){
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<=',$text);
+            }else if( $operator == '>' ){
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'>',$text);
+            }else if( $operator == '<' ){
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
+            }else if( $operator == '<>' ){
+                $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
             }
 		}		
 		
@@ -284,12 +300,30 @@ class BaseModel extends Model
 		{
 			if( is_array($request['distinct_column']) )
 			{
-				$colsDistinct = implode('`,`',$request['distinct_column']);
-				$query->select(\DB::raw('distinct `'.$colsDistinct.'`'));								
+                foreach ($request['distinct_column'] as $key => $value) {
+                    $this->validate(['distinct_column'=>$value], [
+                        'distinct_column' => [
+                            new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
+                        ],	
+                    ]);
+                }
+
+                if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+
+				$colsDistinct = implode('),(',$request['distinct_column']);
+				$query->setUseDistinct(1)->select(\DB::raw('distinct ('.$colsDistinct.')'));
 			}
 			else
 			{
-				$query->select(\DB::raw('distinct `'.$request['distinct_column'].'`'));
+                $this->validate($request, [
+                    'distinct_column' => [
+                        new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
+                    ],	
+                ]);
+
+                if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+
+				$query->setUseDistinct(1)->select(\DB::raw('distinct ('.$request['distinct_column'].')'));
 			}
 
 			return $query->encapsulatedQuery('myTableDistinct');			
@@ -327,15 +361,15 @@ class BaseModel extends Model
 			if( is_array($request['sort_column']) )
 			{
 				foreach ($request['sort_column'] as $key_sort_column => $value_sort_column) {
-					$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$value_sort_column].'`'),$request['sort_type'][$key_sort_column]);
+					$query->orderBy(\DB::raw('('.$this->sortableAndSearchableColumn[$value_sort_column].')'),$request['sort_type'][$key_sort_column]);
 				}
 			}
 			else
 			{				
-				$query->orderBy(\DB::raw('`'.$this->sortableAndSearchableColumn[$request['sort_column']].'`'),$request['sort_type']);
+				$query->orderBy(\DB::raw('('.$this->sortableAndSearchableColumn[$request['sort_column']].')'),$request['sort_type']);
 			}
 		}else {			
-			if(!empty($this->sortableAndSearchableColumn[$this->getKeyName()])) $query->orderBy(\DB::raw('`'.(empty($default_column) ? $this->getKeyName():$default_column).'`'),$default_type);
+			if(!empty($this->sortableAndSearchableColumn[$this->getKeyName()])) $query->orderBy(\DB::raw('('.(empty($default_column) ? $this->getKeyName():$default_column).')'),$default_type);
 		}
 
 	}
@@ -408,8 +442,8 @@ class BaseModel extends Model
         		->where($this->primaryKey, $this->id)
         		->update([
         			static::DELETED_AT	=>	date('Y-m-d H:i:s'),
-        			static::DELETED_BY 	=> 	user()->id,
-        			static::DELETED_FROM    =>	$_SERVER['REMOTE_ADDR'],
+        			'deleted_by' 	=> 	user()->id,
+        			'deleted_from'	=>	$_SERVER['REMOTE_ADDR'],
         		]);
         }
         else
@@ -471,4 +505,17 @@ class BaseModel extends Model
 		return $query->from(\DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.') '.$this->joinRaw));
     }
     
-} 
+    /**
+     * Get a new query builder instance for the connection.
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    protected function newBaseQueryBuilder()
+    {
+        $connection = $this->getConnection();
+
+        return new QueryBuilder(
+            $connection, $connection->getQueryGrammar(), $connection->getPostProcessor()
+        );
+    }
+}
