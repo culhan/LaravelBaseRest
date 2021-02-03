@@ -396,13 +396,14 @@ class Builder extends QueryBuilder
      */
     public function replaceColumnNameAliasArray($arr_column = [])
     {
+        $new_arr = [];
         if( !empty($arr_column) ){
             foreach ($arr_column as $key => $value) {
-                $arr_column[$this->replaceColumnNameAlias($key)] = $value;
+                $new_arr[$this->replaceColumnNameAlias($key)] = $value;
             }
         }
         
-        return $arr_column;
+        return $new_arr;
     }
 
     /**
