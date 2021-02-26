@@ -77,7 +77,7 @@ class Helpers
 					$value = self::json_decode_recursive($value, $array_or_object);
 				// }else if( is_numeric($value) ){
 				// 	$value += 0;
-				}else if( $value == "[]") {
+				}else if( $value == "[]" && $value != 0) {
 					$value = [];
 				}
 				if(is_object($input)) $input->{$key} = $value;
