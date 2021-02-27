@@ -22,7 +22,7 @@ class Locking
 			return self::checkAndWait($key);
 		}
 		
-		Cache::forever('lock'.$key, '');		
+        Cache::put('lock'.$key, '', now()->addMinutes(1));		
 		// Lock::create(['key'	=>	$key]);
 		if( empty(Config::get('sitesetting.lock')) )
 		{
