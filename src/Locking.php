@@ -46,9 +46,9 @@ class Locking
 		{			
 			$arr_key = Config::get('sitesetting.lock');
 			
-			Cache::forget('lock'.$arr_key[(count($arr_key)-1)]);				
+			Cache::forget('lock'.$arr_key[0]);				
 			// $lock = Lock::where('key','=',$arr_key[(count($arr_key)-1)])->delete();			
-			array_pop($arr_key);
+			array_shift($arr_key);
 			\Config::set('sitesetting.lock',$arr_key);			
 			
 			// $transactionLevel = \DB::transactionLevel();
