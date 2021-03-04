@@ -331,7 +331,7 @@ class Builder extends QueryBuilder
             $keyExpression = str_replace(["'",' '],["",''],$expressionVal[$countVal-1]);
             unset($expressionVal[$countVal-1]);
             return [
-                'query' => implode($expressionVal), 
+                'query' => implode(' as ',$expressionVal), 
                 'alias_query'   => $keyExpression
             ];
         }else {
