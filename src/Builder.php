@@ -511,10 +511,10 @@ class Builder extends QueryBuilder
 			});
 		}else {
 			if( $operator == 'like' ){
-				$query->builderSortableAndSearchableColumn[$column] = 'LOWER('.$query->builderSortableAndSearchableColumn[$column].')';
+				// $query->builderSortableAndSearchableColumn[$column] = 'LOWER('.$query->builderSortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+				$query->{$functionCondition}(\DB::raw('LOWER('.$query->builderSortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
             }else if( $operator == '=' ){
 				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'=',$text);
             }else if( $operator == '>=' ){

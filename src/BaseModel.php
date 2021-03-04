@@ -234,10 +234,10 @@ class BaseModel extends Model
 			});
 		}else {
 			if( $operator == 'like' ){
-				$this->sortableAndSearchableColumn[$column] = 'LOWER('.$this->sortableAndSearchableColumn[$column].')';
+				// $this->sortableAndSearchableColumn[$column] = 'LOWER('.$this->sortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+				$query->{$functionCondition}(\DB::raw('LOWER('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
             }else if( $operator == '=' ){
 				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'=',$text);
             }else if( $operator == '>=' ){
