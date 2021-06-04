@@ -42,19 +42,23 @@ class Locking
 	 */
 	static function unlock($key = 0)
 	{		
-		if( !empty(Config::get('sitesetting.lock')) )
+		if( $key == 1 ){
+            if( !empty(Config::get('sitesetting.lock')) ){
+                $arr_key = Config::get('sitesetting.lock');
+
+                foreach ($arr_key as $key => $value) {
+                    Cache::forget('lock'.$value);
+                    array_shift($arr_key);
+                }
+                \Config::set('sitesetting.lock',[]);
+            }
+        }
+        else if( !empty(Config::get('sitesetting.lock')) )
 		{			
 			$arr_key = Config::get('sitesetting.lock');
-			
-			Cache::forget('lock'.$arr_key[0]);				
-			// $lock = Lock::where('key','=',$arr_key[(count($arr_key)-1)])->delete();			
+			Cache::forget('lock'.$arr_key[0]);							
 			array_shift($arr_key);
-			\Config::set('sitesetting.lock',$arr_key);			
-			
-			// $transactionLevel = \DB::transactionLevel();
-			// for ($i=0; $i < $transactionLevel; $i++) { 
-				// \DB::commit();
-			// }			
+			\Config::set('sitesetting.lock',$arr_key);		
 		}
 	}
 }
