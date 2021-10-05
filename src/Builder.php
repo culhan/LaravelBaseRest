@@ -72,6 +72,13 @@ class Builder extends QueryBuilder
     public $builderSortableAndSearchableColumn = [];
 
     /**
+     * Undocumented variable
+     *
+     * @var array
+     */
+    public $union_binding_where = [];
+
+    /**
      * Execute the query as a "select" statement.
      *
      * @param  array  $columns
@@ -101,6 +108,8 @@ class Builder extends QueryBuilder
     {
         $this->sql_viewing = $this->toSql();
 
+        $this->addBinding( $this->union_binding_where, 'union');
+
         // proses query union
         if ( !empty($this->unions) ){
             foreach ($this->unions as $unions_key => $unions_value) {
@@ -120,6 +129,7 @@ class Builder extends QueryBuilder
                         ->builderSearch();
                     
                     $this->addBinding($this->unions[$unions_key]['query']->getBindings(), 'union');
+                    
                 }
             }
 
@@ -130,24 +140,24 @@ class Builder extends QueryBuilder
             }
         }
 
-        // $clonedSql = $this->cloneWithout(['columns','unionOrders','unions'])->toSql();
-        // $clonedNewSql = $clonedSql = str_replace(['select count(*) as aggregate from ', 'select * from '], '',$clonedSql);
+        $clonedSql = $this->cloneWithout(['columns','unionOrders','unions'])->toSql();
+        $clonedNewSql = $clonedSql = str_replace(['select count(*) as aggregate from ', 'select * from '], '',$clonedSql);
 
-        // preg_match_all('~\(([^()]*)\)~', $clonedSql, $matches);
+        preg_match_all('~\(([^()]*)\)~', $clonedSql, $matches);
             
-        // if( !empty($matches[0]) ){
-        //     foreach ($matches[0] as $key => $value) {
-        //         $key_column = str_replace([ '(', ')' ],[ '', '' ],$value);
+        if( !empty($matches[0]) ){
+            foreach ($matches[0] as $key => $value) {
+                $key_column = str_replace([ '(', ')' ],[ '', '' ],$value);
 
-        //         if( isset($this->mappingSelect[$key_column]) ){
-        //             $new_value = str_replace($key_column, $this->mappingSelect[$key_column], $value);
-        //             $clonedSql = str_replace($value,$new_value,$clonedSql);
-        //         }
-        //     }
-        // }
+                if( isset($this->mappingSelect[$key_column]) ){
+                    $new_value = str_replace($key_column, $this->mappingSelect[$key_column], $value);
+                    $clonedSql = str_replace($value,$new_value,$clonedSql);
+                }
+            }
+        }
 
-        // $this->sql_viewing = str_replace($clonedNewSql, $clonedSql, $this->sql_viewing);
-        // dd( $this->sql_viewing );
+        $this->sql_viewing = str_replace($clonedNewSql, $clonedSql, $this->sql_viewing);
+
         $return = $this->connection->select(
             $this->sql_viewing, $this->getBindings(), ! $this->useWritePdo
         );
@@ -407,6 +417,44 @@ class Builder extends QueryBuilder
     }
 
     /**
+     * Add another query builder as a nested where to the query builder.
+     *
+     * @param  \Illuminate\Database\Query\Builder|static $query
+     * @param  string  $boolean
+     * @return $this
+     */
+    public function addNestedWhereQuery($query, $boolean = 'and')
+    {
+        if( !empty($this->unions)){
+            foreach ($this->unions as $unions_key => $unions_value) {
+
+                $unionMappingSelect = $this->unions[$unions_key]['query']->getQuery()->mappingSelect;
+
+                foreach ($query->wheres as $w_key => $w_value) {
+                    
+                    preg_match_all('~\(([^()]*)\)~', $w_value['column'], $matches);
+
+                    if( !empty($matches[0]) ){
+                        foreach ($matches[0] as $key => $value) {
+                            $key_column = str_replace([ '(', ')' ],[ '', '' ],$value);
+                            
+                            if( isset($unionMappingSelect[$key_column]) ){
+                                $query->wheres[$w_key]['column'] = \DB::raw(str_replace($key_column, $unionMappingSelect[$key_column], $w_value['column']));
+                            }
+                        }
+                    }
+
+                    $this->union_binding_where[] = ($w_value['value']??$w_value['operator']);
+                }
+
+                $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->addNestedWhereQuery($query, $boolean);
+            }
+        }
+
+        return parent::addNestedWhereQuery($query, $boolean);
+    }
+
+    /**
      * Add a basic where clause to the query.
      *
      * @param  string|array|\Closure  $column
@@ -417,6 +465,30 @@ class Builder extends QueryBuilder
      */
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
+        if( !empty($this->unions)){
+            
+            foreach ($this->unions as $unions_key => $unions_value) {
+                
+                $unionMappingSelect = $this->unions[$unions_key]['query']->getQuery()->mappingSelect;
+                
+                preg_match_all('~\(([^()]*)\)~', $column, $matches);
+
+                if( !empty($matches[0]) ){
+                    foreach ($matches[0] as $m_key => $m_value) {
+                        $key_column = str_replace([ '(', ')' ],[ '', '' ],$m_value);
+                        
+                        if( isset($unionMappingSelect[$key_column]) ){
+                            $column = str_replace($key_column, $unionMappingSelect[$key_column], $column);
+                        }
+                    }
+                }
+
+                $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->where($column, $operator, $value, $boolean);
+                
+                $this->union_binding_where[] = ($value??$operator);
+            }
+        }
+        
         if ($column instanceof Closure) {
             return $this->whereNested($column, $boolean);
         }
@@ -511,10 +583,10 @@ class Builder extends QueryBuilder
 			});
 		}else {
 			if( $operator == 'like' ){
-				// $query->builderSortableAndSearchableColumn[$column] = 'LOWER('.$query->builderSortableAndSearchableColumn[$column].')';
+				$query->builderSortableAndSearchableColumn[$column] = 'LOWER('.$query->builderSortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw('LOWER('.$query->builderSortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
             }else if( $operator == '=' ){
 				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'=',$text);
             }else if( $operator == '>=' ){
