@@ -184,6 +184,16 @@ class Builder extends QueryBuilder
      */
     public function getCountForPagination($columns = ['*'])
     {
+        if( $this->useDistinct == 1){
+            $results = $this->cloneWithout(['columns', 'orders', 'limit', 'offset', 'table'])
+                    ->cloneWithoutBindings(['select', 'order'])
+                    ->setAggregate('count', $this->withoutSelectAliases($columns))
+                    ->from( \DB::raw('('.$this->cloneWithout([])->toSql() . ") as distinctTable ") )
+                    ->get()->all();
+            
+            return (int) array_change_key_case((array) $results[0])['aggregate'];
+        }
+        
         $results = $this->runPaginationCountQuery($columns);
 
         // jika union maka akan di hitung semua
