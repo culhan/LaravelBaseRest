@@ -488,12 +488,12 @@ class Builder extends QueryBuilder
                         $key_column = str_replace([ '(', ')' ],[ '', '' ],$m_value);
                         
                         if( isset($unionMappingSelect[$key_column]) ){
-                            $column = str_replace($key_column, $unionMappingSelect[$key_column], $column);
+                            $column_on_union = str_replace($key_column, $unionMappingSelect[$key_column], $column);
                         }
                     }
                 }
 
-                $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->where($column, $operator, $value, $boolean);
+                $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->where($column_on_union, $operator, $value, $boolean);
                 
                 $this->union_binding_where[] = ($value??$operator);
             }
