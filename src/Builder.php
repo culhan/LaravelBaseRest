@@ -107,6 +107,7 @@ class Builder extends QueryBuilder
     protected function runSelect()
     {
         $this->sql_viewing = $this->toSql();
+        $this->bindings["union"] = [];
 
         $this->addBinding( $this->union_binding_where, 'union');
 
@@ -125,11 +126,11 @@ class Builder extends QueryBuilder
                 if(!empty($this->useSearch)){
                     $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']
                         ->cloneWithout(['unionOrders'])
-                        ->setBuilderSortableAndSearchableColumn($this->builderSortableAndSearchableColumn)
-                        ->builderSearch();
+                        ->setBuilderSortableAndSearchableColumn($this->builderSortableAndSearchableColumn);
                     
                     $this->addBinding($this->unions[$unions_key]['query']->getBindings(), 'union');
-                    
+                }else {
+                    $this->addBinding($this->unions[$unions_key]['query']->getBindings(), 'union');
                 }
             }
 
@@ -454,7 +455,7 @@ class Builder extends QueryBuilder
                         }
                     }
 
-                    $this->union_binding_where[] = ($w_value['value']??$w_value['operator']);
+                    // $this->union_binding_where[] = ($w_value['value']??$w_value['operator']);
                 }
 
                 $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->addNestedWhereQuery($query, $boolean);
@@ -475,14 +476,15 @@ class Builder extends QueryBuilder
      */
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
+        // $this->union_binding_where = [];
         if( !empty($this->unions)){
-            
             foreach ($this->unions as $unions_key => $unions_value) {
                 
                 $unionMappingSelect = $this->unions[$unions_key]['query']->getQuery()->mappingSelect;
                 
                 preg_match_all('~\(([^()]*)\)~', $column, $matches);
 
+                $column_on_union = $column;
                 if( !empty($matches[0]) ){
                     foreach ($matches[0] as $m_key => $m_value) {
                         $key_column = str_replace([ '(', ')' ],[ '', '' ],$m_value);
@@ -495,7 +497,7 @@ class Builder extends QueryBuilder
 
                 $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->where($column_on_union, $operator, $value, $boolean);
                 
-                $this->union_binding_where[] = ($value??$operator);
+                // $this->union_binding_where = array_merge($this->union_binding_where, $unions_value['query']->getBindings());
             }
         }
         
