@@ -100,6 +100,69 @@ class Builder extends QueryBuilder
     }
     
     /**
+     * Undocumented function
+     *
+     * @return void
+     */
+    public function processSelect()
+    {
+        $this->sql_viewing = $this->toSql();
+        $this->bindings["union"] = [];
+
+        $this->addBinding( $this->union_binding_where, 'union');
+        
+        // proses query union
+        if ( !empty($this->unions) ){
+            foreach ($this->unions as $unions_key => $unions_value) {
+
+                if(!empty($this->aggregate)){
+                    $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']
+                        ->getQuery()
+                        ->cloneWithout(['columns', 'orders', 'limit', 'offset', 'unionOrders'])
+                        ->cloneWithoutBindings(['select', 'order'])
+                        ->setAggregate('count', $this->withoutSelectAliases($this->columns));
+                }
+                
+                if(!empty($this->useSearch)){
+                    $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']
+                        ->cloneWithout(['unionOrders'])
+                        ->setBuilderSortableAndSearchableColumn($this->builderSortableAndSearchableColumn);
+                    
+                    $this->addBinding($this->unions[$unions_key]['query']->getBindings(), 'union');
+                }else {
+                    $this->addBinding($this->unions[$unions_key]['query']->getBindings(), 'union');
+                }
+            }
+
+            if(!empty($this->aggregate)){
+                $this->sql_viewing = $this->cloneWithout(['unionOrders'])->toSql();
+            }else {
+                $this->sql_viewing = $this->cloneWithout([])->toSql();
+            }
+        }
+
+        $clonedSql = $this->cloneWithout(['columns','unionOrders','unions'])->toSql();
+        $clonedNewSql = $clonedSql = str_replace(['select count(*) as aggregate from ', 'select * from '], '',$clonedSql);
+
+        preg_match_all('~\(([^()]*)\)~', $clonedSql, $matches);
+            
+        if( !empty($matches[0]) ){
+            foreach ($matches[0] as $key => $value) {
+                $key_column = str_replace([ '(', ')' ],[ '', '' ],$value);
+
+                if( isset($this->mappingSelect[$key_column]) ){
+                    $new_value = str_replace($key_column, $this->mappingSelect[$key_column], $value);
+                    $clonedSql = str_replace($value,$new_value,$clonedSql);
+                }
+            }
+        }
+
+        $this->sql_viewing = str_replace($clonedNewSql, $clonedSql, $this->sql_viewing);
+
+        return $this;
+    }
+
+    /**
      * Run the query as a "select" statement against the connection.
      *
      * @return array
@@ -110,7 +173,7 @@ class Builder extends QueryBuilder
         $this->bindings["union"] = [];
 
         $this->addBinding( $this->union_binding_where, 'union');
-
+        
         // proses query union
         if ( !empty($this->unions) ){
             foreach ($this->unions as $unions_key => $unions_value) {
@@ -194,7 +257,7 @@ class Builder extends QueryBuilder
             
             return (int) array_change_key_case((array) $results[0])['aggregate'];
         }
-        
+
         $results = $this->runPaginationCountQuery($columns);
 
         // jika union maka akan di hitung semua
@@ -441,7 +504,8 @@ class Builder extends QueryBuilder
 
                 $unionMappingSelect = $this->unions[$unions_key]['query']->getQuery()->mappingSelect;
 
-                foreach ($query->wheres as $w_key => $w_value) {
+                $query_for_union = clone $query;
+                foreach ($query_for_union->wheres as $w_key => $w_value) {
                     
                     preg_match_all('~\(([^()]*)\)~', $w_value['column'], $matches);
 
@@ -450,7 +514,7 @@ class Builder extends QueryBuilder
                             $key_column = str_replace([ '(', ')' ],[ '', '' ],$value);
                             
                             if( isset($unionMappingSelect[$key_column]) ){
-                                $query->wheres[$w_key]['column'] = \DB::raw(str_replace($key_column, $unionMappingSelect[$key_column], $w_value['column']));
+                                $query_for_union->wheres[$w_key]['column'] = \DB::raw(str_replace($key_column, $unionMappingSelect[$key_column], $w_value['column']));
                             }
                         }
                     }
@@ -458,7 +522,7 @@ class Builder extends QueryBuilder
                     // $this->union_binding_where[] = ($w_value['value']??$w_value['operator']);
                 }
 
-                $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->addNestedWhereQuery($query, $boolean);
+                $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->addNestedWhereQuery($query_for_union, $boolean);
             }
         }
 
@@ -496,8 +560,7 @@ class Builder extends QueryBuilder
                 }
 
                 $this->unions[$unions_key]['query'] = $this->unions[$unions_key]['query']->where($column_on_union, $operator, $value, $boolean);
-                
-                // $this->union_binding_where = array_merge($this->union_binding_where, $unions_value['query']->getBindings());
+
             }
         }
         
@@ -516,6 +579,31 @@ class Builder extends QueryBuilder
         }
 
         return parent::where($column, $operator, $value, $boolean);
+    }
+
+    /**
+     * Add a raw where clause to the query.
+     *
+     * @param  string  $sql
+     * @param  mixed   $bindings
+     * @param  string  $boolean
+     * @return $this
+     */
+    public function whereRaw($sql, $bindings = [], $boolean = 'and')
+    {
+        preg_match_all('~\(([^()]*)\)~', $sql, $matches);
+
+        if( !empty($matches[0]) ){
+            foreach ($matches[0] as $m_key => $m_value) {
+                $key_column = str_replace([ '(', ')' ],[ '', '' ],$m_value);
+                
+                if( isset($this->mappingSelect[$key_column]) ){
+                    $sql = str_replace($key_column, $this->mappingSelect[$key_column], $sql);
+                }
+            }
+        }
+
+        parent::whereRaw($sql, $bindings, $boolean);
     }
 
     /**

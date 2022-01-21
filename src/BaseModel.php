@@ -119,33 +119,8 @@ class BaseModel extends Model
 	 */
     public function scopeEncapsulatedQuery($query, $alias = 'myTable')
 	{
-        // if( !empty($query->getQuery()->unions) ){
-        //     $queryOld = $this->getSql($query);
-        //     $thisClass = get_class($this);
-        //     $model = new $thisClass;
-        //     $model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
-        //     $model->setRelationColumn( $this->relationColumn );
-        //     $query = $model->setTable(\DB::raw('('.$queryOld.') as '.$alias))->whereRaw("1=1");
-        // }
 		return $query;
     }
-    
-	// public function scopeEncapsulatedQuery($query, $alias = 'myTable')
-	// {
-    //     $queryOld = $this->getSql($query);
-        
-    //     $thisClass = get_class($this);
-    //     $thisClassExploded = explode('\\',$thisClass);
-    //     $uuidview = Viewing::set($thisClassExploded[count($thisClassExploded)-1]);
-    //     \DB::statement(\DB::raw('create or replace view `'.$uuidview.'` as ('.$queryOld.')'));
-
-	// 	$thisClass = get_class($this);
-	// 	$model = new $thisClass;
-	// 	$model->setSortableAndSearchableColumn( $this->sortableAndSearchableColumn );
-    //     $model->setRelationColumn( $this->relationColumn );
-	// 	$query = $model->setTable($uuidview)->whereRaw("1=1")->setViewingUuid($uuidview);
-	// 	return $query;
-	// }
 
 	/**
 	 * [FunctionName description]
@@ -162,14 +137,16 @@ class BaseModel extends Model
                 'required_with:search_text',
                 new \KhanCode\LaravelBaseRest\Rules\SortableAndSearchable($this->sortableAndSearchableColumn)
             ],
-            'search_text'   => ['required_with:search_column'],			
+            'search_text'   => [
+                ''
+            ],			
         ]);
-
-		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 		
+		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+
 		$query = $query->setUseSearch(1)->encapsulatedQuery('myTable');
         
-		if( isset($request['search_column']) && isset($request['search_text']) )
+		if( isset($request['search_column']) && array_key_exists('search_text', $request) )
 		{
 			if( is_array($request['search_column']) )
 			{				
@@ -183,14 +160,11 @@ class BaseModel extends Model
 			}
 		}
 
-		if( !empty($request['search']) )
+		if( isset($request['search']) )
 		{			
             $sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
             $mappingSelect = $query->getQuery()->mappingSelect;
 			$query->where(function ($query) use ($sortableAndSearchableColumn, $request, $mappingSelect) {
-                $query->setBuilderSortableAndSearchableColumn($sortableAndSearchableColumn)
-                    ->setMappingSelect($mappingSelect);
-
 				foreach ($sortableAndSearchableColumn as $key => $value) {                	
                     if($value){
                         $this->searchOperator($query, $value, $request['search'], 'like', 'or' );
@@ -220,24 +194,39 @@ class BaseModel extends Model
 		$functionCondition = 'where';
 		if( $conditions == 'or')
 			$functionCondition = 'orWhere';
+
+		if( $conditions == 'in')
+			$functionCondition = 'whereIn';
+
+		if( $conditions == 'notin')
+			$functionCondition = 'whereNotIn';
 					
 		if( is_array($column) ) {
             $sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
             $mappingSelect = $query->getQuery()->mappingSelect;
             
 			$query->{$functionCondition}(function ($query) use ($column,$text,$operator,$conditions, $sortableAndSearchableColumn, $mappingSelect) {
-                $query->setBuilderSortableAndSearchableColumn($sortableAndSearchableColumn)
-                    ->setMappingSelect($mappingSelect);
 				foreach ($column as $arr_search_column => $value_search_column) {
 					$query = $this->searchOperator($query, $value_search_column, $text[$arr_search_column], array_get($operator,$arr_search_column,'like'), array_get($conditions,$arr_search_column,'and') );
 				}
+                
 			});
 		}else {
-			if( $operator == 'like' ){
-				// $this->sortableAndSearchableColumn[$column] = 'LOWER('.$this->sortableAndSearchableColumn[$column].')';
+            if( $operator == "null" ){
+                $query->where(function($query) use ($column){
+                    $query->orWhere(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), '=', "")
+                        ->orWhereNull(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'));
+                });
+            }else if( $operator == "not null" ){
+                $query->where(function($query) use ($column){
+                    $query->Where(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), '<>', "")
+                        ->WhereNotNull(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'));
+                });
+            }else if( $operator == 'like' ){
+				$this->sortableAndSearchableColumn[$column] = 'LOWER('.$this->sortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw('LOWER('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
             }else if( $operator == '=' ){
 				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'=',$text);
             }else if( $operator == '>=' ){
@@ -250,7 +239,9 @@ class BaseModel extends Model
 				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
             }else if( $operator == '<>' ){
                 $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
-            }
+            }else if( in_array($operator,['in','notin']) ){
+                $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), explode(',',$text));
+			}
 		}		
 		
 		return $query;
@@ -277,7 +268,10 @@ class BaseModel extends Model
 	        }
 	        return $sql;
 	    };
-	    $sql = $replace($model->toSql(), $model->getBindings());
+
+        $processed = $model->getQuery()->processSelect();
+
+	    $sql = $replace($processed->sql_viewing, $processed->getBindings());
 
 	    return $sql;
 	}
@@ -308,7 +302,7 @@ class BaseModel extends Model
                     ]);
                 }
 
-                if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+				if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 
 				$colsDistinct = implode('),(',$request['distinct_column']);
 				$query->setUseDistinct(1)->select(\DB::raw('distinct ('.$colsDistinct.')'));
@@ -321,7 +315,7 @@ class BaseModel extends Model
                     ],	
                 ]);
 
-                if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
+				if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 
 				$query->setUseDistinct(1)->select(\DB::raw('distinct ('.$request['distinct_column'].')'));
 			}
@@ -353,7 +347,7 @@ class BaseModel extends Model
             	new \KhanCode\LaravelBaseRest\Rules\SortType(),
             ],
     	]);
-		
+
 		if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 
 		if( !empty($request['sort_column']) && !empty($request['sort_type']) )
@@ -468,6 +462,17 @@ class BaseModel extends Model
 	{		
 		return \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', (is_null($date) ? '00-00-00 00:00:00' : $date) )->format('Y-m-d H:i:s');
 	}
+
+    /**
+     * Undocumented function
+     *
+     * @param [type] $data
+     * @return void
+     */
+    public function getLastModifiedSyncAttribute($date)
+    {
+        return \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', (is_null($date) ? '00-00-00 00:00:00' : $date) )->format('Y-m-d H:i:s');
+    }
 
 	/**
 	 * check attribute function
