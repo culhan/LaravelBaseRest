@@ -146,20 +146,6 @@ class BaseModel extends Model
 
 		$query = $query->setUseSearch(1)->encapsulatedQuery('myTable');
         
-		if( isset($request['search_column']) && array_key_exists('search_text', $request) )
-		{
-			if( is_array($request['search_column']) )
-			{				
-				foreach ($request['search_column'] as $arr_search_column => $value_search_column) {
-					$query = $this->searchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], array_get($request,'search_operator.'.$arr_search_column,'like'), array_get($request,'search_conditions.'.$arr_search_column,'and') );
-				}	
-			}
-			else
-			{	
-				$query = $this->searchOperator($query, $request['search_column'], $request['search_text'], array_get($request,'search_operator','like'), array_get($request,'search_conditions','and') );
-			}
-		}
-
 		if( isset($request['search']) )
 		{			
             $sortableAndSearchableColumn = $this->sortableAndSearchableColumn;
@@ -173,6 +159,20 @@ class BaseModel extends Model
             });
 
         }
+		
+		if( isset($request['search_column']) && array_key_exists('search_text', $request) )
+		{
+			if( is_array($request['search_column']) )
+			{				
+				foreach ($request['search_column'] as $arr_search_column => $value_search_column) {
+					$query = $this->searchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], array_get($request,'search_operator.'.$arr_search_column,'like'), array_get($request,'search_conditions.'.$arr_search_column,'and') );
+				}	
+			}
+			else
+			{	
+				$query = $this->searchOperator($query, $request['search_column'], $request['search_text'], array_get($request,'search_operator','like'), array_get($request,'search_conditions','and') );
+			}
+		}
         
         return $query;
 
