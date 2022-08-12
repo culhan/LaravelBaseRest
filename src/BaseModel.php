@@ -160,6 +160,20 @@ class BaseModel extends Model
 
         }
 		
+		// fix bug bisa muncul semua karena or
+		if( isset($request["search_conditions"]) ){
+			if( isset($request['search_column']) ){
+				$request['search_column'] = [$request['search_column']];
+			}
+			if( isset($request['search_text']) ){
+				$request['search_text'] = [$request['search_text']];
+			}
+			$request['search_conditions'] = [$request['search_conditions']];
+			if( isset($request['search_operator']) ){
+				$request['search_operator'] = [$request['search_operator']];
+			}
+		}
+
 		if( isset($request['search_column']) && array_key_exists('search_text', $request) )
 		{
 			if( is_array($request['search_column']) )
