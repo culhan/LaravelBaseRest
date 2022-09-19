@@ -252,7 +252,7 @@ class BaseModel extends Model
             }else if( $operator == '<' ){
 				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
             }else if( $operator == '<>' ){
-                $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
+                $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<>',$text);
             }else if( in_array($operator,['in','notin']) ){
                 $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), explode(',',$text));
 			}
