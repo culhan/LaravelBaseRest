@@ -2,11 +2,13 @@
 
 namespace KhanCode\LaravelBaseRest;
 
-use Request;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use KhanCode\LaravelBaseRest\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Model;
 use KhanCode\LaravelBaseRest\ValidationException;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class BaseModel extends Model
 {
@@ -179,12 +181,12 @@ class BaseModel extends Model
 			if( is_array($request['search_column']) )
 			{				
 				foreach ($request['search_column'] as $arr_search_column => $value_search_column) {
-					$query = $this->searchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], array_get($request,'search_operator.'.$arr_search_column,'like'), array_get($request,'search_conditions.'.$arr_search_column,'and') );
+					$query = $this->searchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], Arr::get($request,'search_operator.'.$arr_search_column,'like'), Arr::get($request,'search_conditions.'.$arr_search_column,'and') );
 				}	
 			}
 			else
 			{	
-				$query = $this->searchOperator($query, $request['search_column'], $request['search_text'], array_get($request,'search_operator','like'), array_get($request,'search_conditions','and') );
+				$query = $this->searchOperator($query, $request['search_column'], $request['search_text'], Arr::get($request,'search_operator','like'), Arr::get($request,'search_conditions','and') );
 			}
 		}
         
@@ -221,40 +223,40 @@ class BaseModel extends Model
             
 			$query->{$functionCondition}(function ($query) use ($column,$text,$operator,$conditions, $sortableAndSearchableColumn, $mappingSelect) {
 				foreach ($column as $arr_search_column => $value_search_column) {
-					$query = $this->searchOperator($query, $value_search_column, $text[$arr_search_column], array_get($operator,$arr_search_column,'like'), array_get($conditions,$arr_search_column,'and') );
+					$query = $this->searchOperator($query, $value_search_column, $text[$arr_search_column], Arr::get($operator,$arr_search_column,'like'), Arr::get($conditions,$arr_search_column,'and') );
 				}
                 
 			});
 		}else {
             if( $operator == "null" ){
                 $query->where(function($query) use ($column){
-                    $query->orWhere(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), '=', "")
-                        ->orWhereNull(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'));
+                    $query->orWhere(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), '=', "")
+                        ->orWhereNull(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'));
                 });
             }else if( $operator == "not null" ){
                 $query->where(function($query) use ($column){
-                    $query->Where(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), '<>', "")
-                        ->WhereNotNull(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'));
+                    $query->Where(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), '<>', "")
+                        ->WhereNotNull(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'));
                 });
             }else if( $operator == 'like' ){
 				$this->sortableAndSearchableColumn[$column] = 'LOWER('.$this->sortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+				$query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
             }else if( $operator == '=' ){
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'=',$text);
+				$query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'=',$text);
             }else if( $operator == '>=' ){
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'>=',$text);
+				$query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'>=',$text);
             }else if( $operator == '<=' ){
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<=',$text);
+				$query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<=',$text);
             }else if( $operator == '>' ){
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'>',$text);
+				$query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'>',$text);
             }else if( $operator == '<' ){
-				$query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
+				$query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<',$text);
             }else if( $operator == '<>' ){
-                $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<>',$text);
+                $query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'),'<>',$text);
             }else if( in_array($operator,['in','notin']) ){
-                $query->{$functionCondition}(\DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), explode(',',$text));
+                $query->{$functionCondition}(DB::raw('('.$this->sortableAndSearchableColumn[$column].')'), explode(',',$text));
 			}
 		}		
 		
@@ -319,7 +321,7 @@ class BaseModel extends Model
 				if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 
 				$colsDistinct = implode('),(',$request['distinct_column']);
-				$query->setUseDistinct(1)->select(\DB::raw('distinct ('.$colsDistinct.')'));
+				$query->setUseDistinct(1)->select(DB::raw('distinct ('.$colsDistinct.')'));
 			}
 			else
 			{
@@ -331,7 +333,7 @@ class BaseModel extends Model
 
 				if( !empty( Helpers::is_error() ) ) throw new ValidationException( Helpers::get_error() );
 
-				$query->setUseDistinct(1)->select(\DB::raw('distinct ('.$request['distinct_column'].')'));
+				$query->setUseDistinct(1)->select(DB::raw('distinct ('.$request['distinct_column'].')'));
 			}
 
 			return $query->encapsulatedQuery('myTableDistinct');			
@@ -369,15 +371,15 @@ class BaseModel extends Model
 			if( is_array($request['sort_column']) )
 			{
 				foreach ($request['sort_column'] as $key_sort_column => $value_sort_column) {
-					$query->orderBy(\DB::raw('('.$this->sortableAndSearchableColumn[$value_sort_column].')'),$request['sort_type'][$key_sort_column]);
+					$query->orderBy(DB::raw('('.$this->sortableAndSearchableColumn[$value_sort_column].')'),$request['sort_type'][$key_sort_column]);
 				}
 			}
 			else
 			{				
-				$query->orderBy(\DB::raw('('.$this->sortableAndSearchableColumn[$request['sort_column']].')'),$request['sort_type']);
+				$query->orderBy(DB::raw('('.$this->sortableAndSearchableColumn[$request['sort_column']].')'),$request['sort_type']);
 			}
 		}else {			
-			if(!empty($this->sortableAndSearchableColumn[$this->getKeyName()])) $query->orderBy(\DB::raw('('.(empty($default_column) ? $this->getKeyName():$default_column).')'),$default_type);
+			if(!empty($this->sortableAndSearchableColumn[$this->getKeyName()])) $query->orderBy(DB::raw('('.(empty($default_column) ? $this->getKeyName():$default_column).')'),$default_type);
 		}
 
 	}
@@ -425,7 +427,7 @@ class BaseModel extends Model
     public function delete()
     {
 		if (is_null($this->getKeyName())) {
-            throw new Exception('No primary key defined on model.');
+            throw new \Exception('No primary key defined on model.');
         }
 
         // If the model doesn't exist, there is nothing to delete so we'll just return
@@ -446,7 +448,7 @@ class BaseModel extends Model
 
         if( $this->soft_delete )
         {
-        	\DB::table($this->table)
+        	DB::table($this->table)
         		->where($this->primaryKey, $this->id)
         		->update([
         			static::DELETED_AT	=>	date('Y-m-d H:i:s'),
@@ -509,7 +511,7 @@ class BaseModel extends Model
 	public function scopeJoinRaw($query,$raw)
     {	
 		$this->joinRaw = $raw;
-        return $query = $this->setTable(\DB::raw(strtok($this->table, ' ')." ".$raw));
+        return $query = $this->setTable(DB::raw(strtok($this->table, ' ')." ".$raw));
 	}
 	
 	/**
@@ -521,7 +523,7 @@ class BaseModel extends Model
 	{
 		$thisClass = get_class($this);
 		$model = new $thisClass;		
-		return $query->from(\DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.') '.$this->joinRaw));
+		return $query->from(DB::raw(''.$model->getTable().' '.$type.' INDEX ('.$index_name.') '.$this->joinRaw));
     }
     
     /**

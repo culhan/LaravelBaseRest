@@ -19,6 +19,8 @@ use Illuminate\Database\Query\Processors\Processor;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Query\Expression;
+use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\DB;
 
 class Builder extends QueryBuilder
 {
@@ -252,7 +254,7 @@ class Builder extends QueryBuilder
             $results = $this->cloneWithout(['columns', 'orders', 'limit', 'offset', 'table'])
                     ->cloneWithoutBindings(['select', 'order'])
                     ->setAggregate('count', $this->withoutSelectAliases($columns))
-                    ->from( \DB::raw('('.$this->cloneWithout([])->toSql() . ") as distinctTable ") )
+                    ->from( DB::raw('('.$this->cloneWithout([])->toSql() . ") as distinctTable ") )
                     ->get()->all();
             
             return (int) array_change_key_case((array) $results[0])['aggregate'];
@@ -514,7 +516,7 @@ class Builder extends QueryBuilder
                             $key_column = str_replace([ '(', ')' ],[ '', '' ],$value);
                             
                             if( isset($unionMappingSelect[$key_column]) ){
-                                $query_for_union->wheres[$w_key]['column'] = \DB::raw(str_replace($key_column, $unionMappingSelect[$key_column], $w_value['column']));
+                                $query_for_union->wheres[$w_key]['column'] = DB::raw(str_replace($key_column, $unionMappingSelect[$key_column], $w_value['column']));
                             }
                         }
                     }
@@ -612,7 +614,7 @@ class Builder extends QueryBuilder
 	 */
 	public function builderSearch()
 	{		
-        $request = \Request::all();
+        $request = Request::all();
         
         $query = $this;
 
@@ -621,12 +623,12 @@ class Builder extends QueryBuilder
 			if( is_array($request['search_column']) )
 			{				
 				foreach ($request['search_column'] as $arr_search_column => $value_search_column) {
-					$query = $query->builderSearchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], array_get($request,'search_operator.'.$arr_search_column,'like'), array_get($request,'search_conditions.'.$arr_search_column,'and') );
+					$query = $query->builderSearchOperator($query, $request['search_column'][$arr_search_column], $request['search_text'][$arr_search_column], Arr::get($request,'search_operator.'.$arr_search_column,'like'), Arr::get($request,'search_conditions.'.$arr_search_column,'and') );
 				}	
 			}
 			else
 			{	
-				$query = $query->builderSearchOperator($query, $request['search_column'], $request['search_text'], array_get($request,'search_operator','like'), array_get($request,'search_conditions','and') );
+				$query = $query->builderSearchOperator($query, $request['search_column'], $request['search_text'], Arr::get($request,'search_operator','like'), Arr::get($request,'search_conditions','and') );
 			}
 		}
 
@@ -678,7 +680,7 @@ class Builder extends QueryBuilder
                     ->setMappingSelect($mappingSelect);
 
 				foreach ($column as $arr_search_column => $value_search_column) {
-					$query = $query->builderSearchOperator($query, $value_search_column, $text[$arr_search_column], array_get($operator,$arr_search_column,'like'), array_get($conditions,$arr_search_column,'and') );
+					$query = $query->builderSearchOperator($query, $value_search_column, $text[$arr_search_column], Arr::get($operator,$arr_search_column,'like'), Arr::get($conditions,$arr_search_column,'and') );
 				}
 			});
 		}else {
@@ -686,19 +688,19 @@ class Builder extends QueryBuilder
 				$query->builderSortableAndSearchableColumn[$column] = 'LOWER('.$query->builderSortableAndSearchableColumn[$column].')';
 				$text = strtolower($text);
 				
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
+				$query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'like','%'.$text.'%');
             }else if( $operator == '=' ){
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'=',$text);
+				$query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'=',$text);
             }else if( $operator == '>=' ){
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'>=',$text);
+				$query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'>=',$text);
             }else if( $operator == '<=' ){
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'<=',$text);
+				$query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'<=',$text);
             }else if( $operator == '>' ){
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'>',$text);
+				$query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'>',$text);
             }else if( $operator == '<' ){
-				$query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'<',$text);
+				$query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'<',$text);
             }else if( $operator == '<>' ){
-                $query->{$functionCondition}(\DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'<',$text);
+                $query->{$functionCondition}(DB::raw('('.$query->builderSortableAndSearchableColumn[$column].')'),'<',$text);
             }
 		}		
 		
