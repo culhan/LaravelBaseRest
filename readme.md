@@ -38,10 +38,10 @@ search_operator ["=, !=, <, <=, >, >=, like"]
 search array
 
 ```
-search[0][search_column]
-search[0][search_text]
-search[0][search_condition] ["and, or"]
-search[0][search_operator] ["=, !=, <, <=, >, >=, like"]
+search_column[0]
+search_text[0]
+search_condition[0] ["and, or"]
+search_operator[0] ["=, !=, <, <=, >, >=, like"]
 ```
 
 sort
@@ -54,8 +54,8 @@ sort_type ["asc, desc"]
 sort array
 
 ```
-sort[0][sort_column]
-sort[0][sort_type] ["asc, desc"]
+sort_column[0]
+sort_type[0] ["asc, desc"]
 ```
 
 hide attribute
