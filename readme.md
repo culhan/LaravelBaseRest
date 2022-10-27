@@ -23,6 +23,48 @@ $ php artisan vendor:publish --tag=laravelbaserest.lang
 
 ## Usage
 
+Searching
+
+Parameter
+
+```
+search
+search_column
+search_text
+search_condition ["and, or"]
+search_operator ["=, !=, <, <=, >, >=, like"]
+```
+
+search array
+
+```
+search_column[0]
+search_text[0]
+search_condition[0] ["and, or"]
+search_operator[0] ["=, !=, <, <=, >, >=, like"]
+```
+
+sort
+
+```
+sort_column
+sort_type ["asc, desc"]
+```
+
+sort array
+
+```
+sort_column[0]
+sort_type[0] ["asc, desc"]
+```
+
+hide attribute
+
+```
+default show_{{attr_name}} = 1
+to hide attribute show_{{attr_name}} = 0
+```
+
 this for base model 
 ```
 use KhanCode\LaravelBaseRest\BaseModel;
