@@ -381,7 +381,7 @@ class Builder extends QueryBuilder
                 
                 if ( $this->useDistinct == 1 ) {
                     if ($value instanceof Expression) {
-                        $value = new Expression($this->replaceColumnNameAlias($value->getValue($this->grammer), 1));
+                        $value = new Expression($this->replaceColumnNameAlias($value->getValue($this->grammar), 1));
                     }else {
                         $value = new Expression($this->replaceColumnNameAlias($value, 1));
                     }
@@ -406,7 +406,7 @@ class Builder extends QueryBuilder
     public function explodeSelect($select_statement)
     {
         if ($select_statement instanceof Expression) {
-            $expressionVal = $select_statement->getValue($this->grammer);
+            $expressionVal = $select_statement->getValue($this->grammar);
         }else {
             $expressionVal = $select_statement;
         }
@@ -574,7 +574,7 @@ class Builder extends QueryBuilder
             $column = $this->replaceColumnNameAliasArray($column);
         }else{
             if ($column instanceof Expression) {
-                $column = new Expression($this->replaceColumnNameAlias($column->getValue($this->grammer)));
+                $column = new Expression($this->replaceColumnNameAlias($column->getValue($this->grammar)));
             }else {
                 $column = new Expression($this->replaceColumnNameAlias($column));
             }
